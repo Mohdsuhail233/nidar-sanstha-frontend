@@ -1,0 +1,7 @@
+{
+  "name": "Nidar Sanstha Portal-47",
+  "description": "A comprehensive React-based management portal for Nidar Sanstha featuring role-based dashboards, customer and staff management, survey modules, and automated ID card generation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

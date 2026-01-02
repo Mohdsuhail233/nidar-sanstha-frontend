@@ -1,0 +1,140 @@
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { useAuth } from '../App';
+import { Role } from '../types';
+import { ShieldAlert, Loader2, Phone, Lock, ArrowRight, WifiOff } from 'lucide-react';
+
+const Login: React.FC = () => {
+  const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isNetworkError, setIsNetworkError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setIsNetworkError(false);
+
+    try {
+      // POST /auth/login
+      const response = await api.post('/auth/login', { mobile, password });
+      const userData = response.data;
+      
+      login(userData);
+
+      // Redirect based on role exact enums
+      const roleRedirects: Record<string, string> = {
+        'SUPER_ADMIN': '/dashboard/super-admin',
+        'ADMIN': '/dashboard/admin',
+        'FIELD_STAFF': '/dashboard/field-staff',
+      };
+
+      const redirectPath = roleRedirects[userData.role] || '/';
+      navigate(redirectPath, { replace: true });
+    } catch (err: any) {
+      console.error("Login Error Catch:", err);
+      
+      if (err.isNetworkError) {
+        setIsNetworkError(true);
+        setError(err.message);
+      } else {
+        setError(err.response?.data?.message || 'Invalid credentials or server error.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl shadow-blue-100 overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+        <div className="p-10 pt-16 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-[2rem] mb-6 text-white shadow-xl shadow-blue-200">
+            <ShieldAlert size={40} />
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Nidar Sanstha</h1>
+          <p className="text-gray-400 font-semibold text-sm">Operation & Management Portal</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-10 pt-2 space-y-6">
+          {error && (
+            <div className={`p-4 rounded-2xl border animate-in shake duration-300 ${
+              isNetworkError ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-red-50 border-red-100 text-red-600'
+            }`}>
+              <div className="flex items-center gap-2 mb-1">
+                {isNetworkError ? <WifiOff size={16} /> : <ShieldAlert size={16} />}
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {isNetworkError ? 'Connection Error' : 'Auth Failed'}
+                </span>
+              </div>
+              <p className="text-xs font-bold leading-relaxed">{error}</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="group">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Staff ID / Mobile</label>
+              <div className="relative">
+                <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+                <input
+                  type="tel"
+                  required
+                  maxLength={10}
+                  placeholder="Enter registered mobile"
+                  className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-bold"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="group">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-bold"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[1.5rem] shadow-2xl shadow-blue-200 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-3 text-lg"
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={24} />
+            ) : (
+              <>
+                Sign In
+                <ArrowRight size={20} />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
+          <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
+            Authorized Personnel Only. Session cookies are mandatory for system access.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
