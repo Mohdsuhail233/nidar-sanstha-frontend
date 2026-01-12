@@ -278,7 +278,7 @@ const StaffForm: React.FC = () => {
     
     ['profileImageUrl', 'resumeUrl', 'aadharFrontSideUrl', 'aadharBackSideUrl', 'idCardPdfUrl', 'createdAt', 'familyMembers'].forEach(f => delete (submissionData as any)[f]);
     
-    data.append('data', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
+    data.append('staff', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
     
     if (files.profileImage) data.append('profileImage', files.profileImage);
     if (files.resume) data.append('resume', files.resume);

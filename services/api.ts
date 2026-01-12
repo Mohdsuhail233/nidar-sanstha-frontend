@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Ensure the URL matches your Spring Boot server address exactly
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://140.245.8.86:8080';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -18,7 +18,7 @@ api.interceptors.response.use(
     if (!error.response) {
       console.error("CRITICAL: Backend server at " + API_BASE_URL + " is unreachable.");
       return Promise.reject({
-        message: "Backend server unreachable. Please ensure the Spring Boot app is running.",
+        message: "  server unreachable. Please try again later.",
         isNetworkError: true
       });
     }
