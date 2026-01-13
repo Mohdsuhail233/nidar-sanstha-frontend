@@ -508,7 +508,7 @@ const CustomerForm: React.FC = () => {
               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex flex-col items-center gap-3 animate-in slide-in-from-top-2">
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Scan to Pay</p>
                 <div className="w-48 h-48 bg-white p-2 rounded-xl shadow-sm border border-blue-100 flex items-center justify-center overflow-hidden">
-                  <img src=" public/GooglePay_QR.png" alt="Payment QR" className="w-full h-full object-contain" />
+                  <img src=" /GooglePay_QR.png" alt="Payment QR" className="w-full h-full object-contain" />
                 </div>
               </div>
             )}
