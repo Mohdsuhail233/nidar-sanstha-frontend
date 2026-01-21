@@ -1,29 +1,42 @@
-
 import axios from 'axios';
 
-// Ensure the URL matches your Spring Boot server address exactly
 const API_BASE_URL = "https://nidarsanstha.xyz"
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
-  // Removed hardcoded Content-Type to allow browser/axios to set it correctly
-  // depending on whether we send JSON or FormData (with files).
+  // withCredentials ko hata sakte ho kyunki ab hum cookies use nahi kar rahe
+  // withCredentials: true, 
 });
 
-// Response interceptor for better error reporting
+// --- REQUEST INTERCEPTOR: Har request ke saath token bhejne ke liye ---
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token'); // Login ke waqt hum ise save karenge
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// --- RESPONSE INTERCEPTOR: Error handle karne ke liye ---
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
       console.error("CRITICAL: Backend server at " + API_BASE_URL + " is unreachable.");
       return Promise.reject({
-        message: "  server unreachable. Please try again later.",
+        message: "Server unreachable. Please try again later.",
         isNetworkError: true
       });
     }
 
-    if (error.response?.status === 401) {
+    // Agar token expire ho gaya ya galat hai (401 ya 403)
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem('token'); // Purana token saaf karo
       if (!window.location.hash.includes('/login')) {
         window.location.hash = '#/login';
       }

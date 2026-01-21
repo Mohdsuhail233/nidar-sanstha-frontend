@@ -15,38 +15,43 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setIsNetworkError(false);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
+  setIsNetworkError(false);
 
-    try {
-      const response = await api.post('/auth/login', { mobile, password });
-      const userData = response.data;
+  try {
+    const response = await api.post('/auth/login', { mobile, password });
+    const userData = response.data;
 
-      login(userData);
-
-      const roleRedirects: Record<string, string> = {
-        SUPER_ADMIN: '/dashboard/super-admin',
-        ADMIN: '/dashboard/admin',
-        FIELD_STAFF: '/dashboard/field-staff',
-      };
-
-      navigate(roleRedirects[userData.role] || '/', { replace: true });
-    } catch (err: any) {
-      console.error('Login Error:', err);
-
-      if (err.isNetworkError) {
-        setIsNetworkError(true);
-        setError(err.message);
-      } else {
-        setError(err.response?.data?.message || 'Server error');
-      }
-    } finally {
-      setIsLoading(false);
+    // --- YE LINE ADD KARO ---
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
     }
-  };
+
+    login(userData);
+
+    const roleRedirects: Record<string, string> = {
+      SUPER_ADMIN: '/dashboard/super-admin',
+      ADMIN: '/dashboard/admin',
+      FIELD_STAFF: '/dashboard/field-staff',
+    };
+
+    navigate(roleRedirects[userData.role] || '/', { replace: true });
+  } catch (err: any) {
+    console.error('Login Error:', err);
+    // Error handling waise hi rahegi
+    if (err.isNetworkError) {
+      setIsNetworkError(true);
+      setError(err.message);
+    } else {
+      setError(err.response?.data?.message || 'Invalid Credentials');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -162,7 +167,7 @@ const Login: React.FC = () => {
         {/* Footer */}
         <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
           <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.2em]">
-            Authorized Person Only. Session cookies are mandatory.
+            Authorized Person Only.
           </p>
         </div>
       </div>
