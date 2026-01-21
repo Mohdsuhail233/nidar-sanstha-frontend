@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Ensure the URL matches your Spring Boot server address exactly
-const API_BASE_URL = "https://129.154.232.213"
+const API_BASE_URL = "https://nidarsanstha.xyz"
 
 const api = axios.create({
   baseURL: API_BASE_URL,

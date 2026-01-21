@@ -272,12 +272,6 @@ const CustomerForm: React.FC = () => {
     if (type === 'familyPhoto' && index !== undefined) setFamilyPhotos(prev => ({ ...prev, [index]: file }));
   };
 
-  const handlePrescriptionFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = e.target.files;
-    if (!list) return;
-    Array.from(list).forEach(f => { if (f instanceof File) handleFileCapture(f, 'prescriptionPhoto'); });
-  };
-
   const addFamilyMember = () => {
     setFormData(prev => ({
       ...prev,
@@ -444,7 +438,9 @@ const CustomerForm: React.FC = () => {
                     <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center gap-3">
                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Upload Prescriptions ({prescriptionFiles.length})</p>
                        <div className="flex gap-2">
-                          <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer">Add More<input type="file" multiple className="hidden" onChange={handlePrescriptionFilesChange} /></label>
+                          <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer">Add More<input type="file" multiple className="hidden" onChange={e => {
+                            if (e.target.files) Array.from(e.target.files).forEach(f => handleFileCapture(f, 'prescriptionPhoto'));
+                          }} /></label>
                           <button type="button" onClick={() => setShowCamera({ type: 'prescriptionPhoto' })} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase">Capture</button>
                        </div>
                     </div>
