@@ -165,7 +165,7 @@ const StaffList: React.FC = () => {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
             <input 
               type="text" 
-              placeholder="Search Personnel Name..." 
+              placeholder="Search Employe Name..." 
               className="pl-12 pr-4 bg-white border border-gray-200 rounded-2xl outline-none w-full h-full font-bold shadow-sm" 
               value={searchValue} 
               onChange={(e) => setSearchValue(e.target.value)} 
@@ -338,7 +338,7 @@ const StaffForm: React.FC = () => {
             <div><label className={labelClass}>Blood Group</label><select name="bloodGroup" value={formData.bloodGroup || ''} onChange={handleInputChange} className={inputClass}><option value="">Select Group</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="O+">O+</option><option value="O-">O-</option><option value="AB+">AB+</option><option value="AB-">AB-</option></select></div>
             <div><label className={labelClass}>Access Role *</label><select name="role" value={formData.role || Role.FIELD_STAFF} onChange={handleInputChange} className={inputClass}><option value="SUPER_ADMIN">SUPER_ADMIN</option><option value="ADMIN">ADMIN</option><option value="FIELD_STAFF">FIELD_STAFF</option></select></div>
             <div><label className={labelClass}>Designation</label><input name="designation" value={formData.designation || ''} onChange={handleInputChange} className={inputClass} placeholder="Work Title" /></div>
-            <div className="md:col-span-2"><label className={labelClass}>Residential Address Node</label><textarea name="address" value={formData.address || ''} onChange={handleInputChange} className={`${inputClass} h-32 pt-5 resize-none`} placeholder="Full Detailed Address" /></div>
+            <div className="md:col-span-2"><label className={labelClass}>Residential Address </label><textarea name="address" value={formData.address || ''} onChange={handleInputChange} className={`${inputClass} h-32 pt-5 resize-none`} placeholder="Full Detailed Address" /></div>
           </div>
         </section>
 
@@ -390,7 +390,7 @@ const StaffDetail: React.FC = () => {
         if (resp.data) setS(resp.data);
       } catch (err: any) { 
         console.error("Fetch detail failed:", err);
-        alert(err.response?.status === 404 ? "Staff member not found." : "Node access failure.");
+        alert(err.response?.status === 404 ? "Employe not found." : "  failure.");
         setS(null);
       }
       finally { setLoading(false); }
@@ -445,7 +445,7 @@ const StaffDetail: React.FC = () => {
             </div>
             <div className="w-full space-y-4">
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Smartphone size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Primary Contact</p><p className="font-bold text-gray-800">{s.mobileNumber}</p></div></div>
-              <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Mail size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Email Node</p><p className="font-bold text-gray-800 truncate text-xs">{s.email}</p></div></div>
+              <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Mail size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Email</p><p className="font-bold text-gray-800 truncate text-xs">{s.email}</p></div></div>
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Briefcase size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Designation</p><p className="font-bold text-gray-800">{s.designation || 'Agent'}</p></div></div>
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><MapPin size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Base Address</p><p className="text-xs font-semibold text-gray-700 leading-tight">{s.address}</p></div></div>
             </div>
@@ -469,14 +469,14 @@ const StaffDetail: React.FC = () => {
 
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-3"><Users size={20} className="text-blue-500" /> Family Registry (Kinship Nodes)</h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-3"><Users size={20} className="text-blue-500" /> Family Registry (Kinship)</h3>
               <span className="px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[9px] font-black text-gray-500 uppercase tracking-widest">{s.familyMembers?.length || 0} Registered</span>
             </div>
             <div className="overflow-x-auto rounded-2xl border border-gray-50">
                 <table className="w-full text-left text-xs min-w-[700px]">
                   <thead className="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
                     <tr>
-                      <th className="px-6 py-4">Kin Name</th>
+                      <th className="px-6 py-4">Name</th>
                       <th className="px-6 py-4">Birth & Contact</th>
                       <th className="px-6 py-4">Education/Work</th>
                       <th className="px-6 py-4">Kinship</th>
