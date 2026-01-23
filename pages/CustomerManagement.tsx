@@ -1518,6 +1518,4 @@ const CustomerManagement: React.FC = () => (
 
 );
 
-
-
 export default CustomerManagement;

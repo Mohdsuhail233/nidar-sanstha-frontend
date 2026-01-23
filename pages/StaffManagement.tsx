@@ -236,8 +236,15 @@ const StaffForm: React.FC = () => {
   const handleInputChange = (e: any) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
 
   const handleFileCapture = (file: File, type: string) => {
-    setFiles(prev => ({ ...prev, [type]: file }));
-  };
+  // 1. Filename se spaces hatakar underscore lagana
+  const cleanName = file.name.replaceAll(/\s+/g, '_');
+  
+  // 2. Nayi File object banana kyunki original file name read-only hota hai
+  const cleanFile = new File([file], cleanName, { type: file.type });
+  
+  // 3. State mein save karna
+  setFiles(prev => ({ ...prev, [type]: cleanFile }));
+};
 
   const addFamilyMember = () => {
     setFormData(prev => ({
