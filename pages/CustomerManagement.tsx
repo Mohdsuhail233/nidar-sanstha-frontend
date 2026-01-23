@@ -15,8 +15,10 @@ import {
   Eye,
 
   Edit3,
-
+  
   ChevronLeft,
+
+ FileText,
 
   Loader2,
 
@@ -474,7 +476,7 @@ const CustomerForm: React.FC = () => {
 
     bloodTestRequired: false, otherTestRequired: false, paymentMode: 'OFFLINE', familyMembers: [],
 
-    Medicine: false, noOfpatient: '0', cardValidityUpto: ''
+    regularMedicine: false, noOfpatient: '0', cardValidityUpto: ''
 
   });
 
@@ -1062,433 +1064,163 @@ const CustomerForm: React.FC = () => {
 
 
 const CustomerDetail: React.FC = () => {
-
   const { id } = useParams();
-
   const navigate = useNavigate();
-
   const [c, setC] = useState<Customer | null>(null);
-
   const [loading, setLoading] = useState(true);
-
-  const [downloading, setDownloading] = useState(false);
-
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-
-
   useEffect(() => {
-
     const fetch = async () => {
-
       setLoading(true);
-
       try {
-
         const resp = await api.get(`/form/view/${id}`);
-
         if (resp.data) setC(resp.data);
-
       } catch (err: any) {
-
         console.error("Fetch detail failed:", err);
-
-        alert(err.response?.status === 404 ? "Patient data not found (404)." : "Fetch failed.");
-
         setC(null);
-
+      } finally {
+        setLoading(false);
       }
-
-      finally { setLoading(false); }
-
     };
-
     fetch();
-
   }, [id]);
 
+  if (loading) return <div className="h-96 flex flex-col items-center justify-center gap-4"><Loader2 className="animate-spin text-blue-600" size={40} /><p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Fetching Details...</p></div>;
+  if (!c) return <div className="h-96 flex flex-col items-center justify-center gap-4"><Info size={48} className="text-gray-200" /><p className="text-gray-400 font-bold">Patient not found.</p></div>;
 
-
- const downloadIdCard = async () => {
-
-  if (!id) return;
-
-  setDownloading(true);
-
-  try {
-
-    // 1. fetch url from backend
-
-    const response = await api.post(`/patient/generate-idcard/${id}`);
-
-    const cloudUrl = typeof response.data === 'string' ? response.data : response.data?.url || response.data?.data;
-
-
-
-    if (cloudUrl && cloudUrl.startsWith('http')) {
-
-      // use axios to download instantly
-
-      const fileResponse = await fetch(cloudUrl);
-
-      const blob = await fileResponse.blob();
-
-
-
-        // make a temporary link for browser download
-
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-
-      link.href = url;
-
-     
-
-      //filename showin in download
-
-      const fileName = `ID_Card_${c?.memberIdNo || id}.pdf`;
-
-      link.setAttribute('download', fileName);
-
-     
-
-      document.body.appendChild(link);
-
-      link.click(); // Automatic download start
-
-
-
-      // 4. Safai (Cleanup)
-
-      link.parentNode?.removeChild(link);
-
-      window.URL.revokeObjectURL(url);
-
-     
-
-    } else {
-
-      alert("PDF generation link missing.");
-
-    }
-
-  } catch (err) {
-
-    console.error("Download Error:", err);
-
-    alert("Identity PDF generation failed.");
-
-  } finally {
-
-    setDownloading(false);
-
-  }
-
-};
-
-
-
-  if (loading) return <div className="h-96 flex flex-col items-center justify-center gap-4"><Loader2 className="animate-spin text-blue-600" size={40} /><p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] text-center">Fetching Patient Details...</p></div>;
-
-  if (!c) return <div className="h-96 flex flex-col items-center justify-center gap-4"><Info size={48} className="text-gray-200" /><p className="text-gray-400 font-bold">Patient not found in registry.</p></div>;
-
-
-
+  // Prescription URLs logic
   const prescriptionUrls = c.medicinePrescriptionPhotoUrl ? c.medicinePrescriptionPhotoUrl.split(',') : [];
 
-
-
   return (
-
     <div className="max-w-6xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
-
       {previewUrl && <PhotoPreviewModal url={previewUrl} title="Asset Preview" onClose={() => setPreviewUrl(null)} />}
-
-     
-
+      
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-
         <div className="flex items-center gap-6">
-
           <button onClick={() => navigate(-1)} className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all"><ChevronLeft size={24} /></button>
-
           <div>
-
             <h1 className="text-3xl font-bold text-gray-900 capitalize leading-tight">{c.name}</h1>
-
             <div className="flex flex-wrap gap-3 mt-2">
-
                <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-100 tracking-wider">ID: {c.memberIdNo}</span>
-
                <span className="text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-100 tracking-wider">Valid Upto: {c.cardValidityUpto || 'N/A'}</span>
-
             </div>
-
           </div>
-
         </div>
-
-        <div className="flex gap-3">
-
-          <button onClick={downloadIdCard} disabled={downloading} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-700 shadow-md active:scale-95 disabled:opacity-50 transition-all">
-
-            {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />} ID Card
-
-          </button>
-
-          <Link to={`/customers/edit/${c.id}`} className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all shadow-md active:scale-95"><Edit3 size={20} /></Link>
-
-        </div>
-
+        <Link to={`/customers/edit/${c.id}`} className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all shadow-md active:scale-95"><Edit3 size={20} /></Link>
       </div>
-
-
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+        {/* LEFT COLUMN: Profile info */}
         <div className="space-y-8">
-
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 flex flex-col items-center">
-
             <div className="w-44 h-44 rounded-full border-4 border-gray-50 shadow-inner overflow-hidden mb-6 bg-gray-50 cursor-pointer group relative" onClick={() => c.patientPhotoUrl && setPreviewUrl(c.patientPhotoUrl)}>
-
               {c.patientPhotoUrl ? <img src={c.patientPhotoUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <UserCircle size={80} className="m-auto text-gray-200 h-full" />}
-
               {c.patientPhotoUrl && <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"><Maximize2 size={32} /></div>}
-
             </div>
-
             <div className="w-full space-y-4">
-
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Smartphone size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Mobile</p><p className="font-bold text-gray-800">{c.mobile}</p></div></div>
-
-              <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Calendar size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Birth</p><p className="font-bold text-gray-800">{c.dateOfBirth}</p></div></div>
-
-              <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><Users size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Beneficiaries</p><p className="font-bold text-gray-800">{c.noOfpatient || '0'}</p></div></div>
-
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center gap-4"><MapPin size={24} className="text-blue-500" /><div><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Address</p><p className="text-xs font-semibold text-gray-700 leading-tight">{c.address}</p></div></div>
-
             </div>
-
           </div>
-
-         
-
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-4">
-
-             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><ShieldCheck size={16} className="text-blue-500" /> Record Metadata</h4>
-
-             <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2">
-
-                <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Created By</p>
-
-                <div className="flex items-center gap-3">
-
-                  <div className="w-10 h-10 bg-white rounded-xl border border-blue-100 flex items-center justify-center text-blue-600">
-
-                    <User size={20} />
-
-                  </div>
-
-                  <div>
-
-                    <p className="font-bold text-gray-900 capitalize text-sm">{c.createdBy?.name || 'Authorized Staff'}</p>
-
-                    <p className="text-[10px] font-black text-gray-400 uppercase">{c.createdBy?.employeeId || 'STAFF_ID'}</p>
-
-                  </div>
-
-                </div>
-
-                <div className="pt-2 border-t border-blue-100/50 flex items-center gap-2 text-[9px] font-bold text-gray-400">
-
-                   <Clock size={12} /> Registered on: {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
-
-                </div>
-
-             </div>
-
-          </div>
-
         </div>
 
-
-
-        <div className="lg:col-span-2 space-y-8">
-
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-3 mb-8"><Stethoscope size={20} className="text-blue-500" /> Medical Summary</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
+        {/* RIGHT COLUMN: Detailed Cards */}
+        <div className="lg:col-span-2 space-y-10">
+          
+          {/* Card 1: Medical Summary & Prescriptions */}
+          <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-4 mb-10">
+              <Stethoscope size={24} className="text-blue-500" /> Medical Summary & Records
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
               <div className={`p-6 rounded-2xl border text-center ${c.bloodGroup ? 'bg-red-50 border-red-100 text-red-700 shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-300'}`}>
-
                 <p className="text-[9px] font-bold uppercase mb-2 tracking-widest">Blood Group</p>
-
                 <p className="text-xl font-bold">{c.bloodGroup || 'N/A'}</p>
-
               </div>
-
               <div className={`p-6 rounded-2xl border text-center ${c.bloodTestRequired ? 'bg-red-50 border-red-100 text-red-700 shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-300'}`}><p className="text-[9px] font-bold uppercase mb-2 tracking-widest">Blood Test</p><p className="text-xl font-bold">{c.bloodTestRequired ? 'YES' : 'NO'}</p></div>
-
               <div className={`p-6 rounded-2xl border text-center ${c.regularMedicine ? 'bg-indigo-50 border-indigo-100 text-indigo-700 shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-300'}`}>
-
                   <p className="text-[9px] font-bold uppercase mb-2 tracking-widest">Medication</p>
-
                   <p className="text-sm font-bold truncate capitalize">{c.medicineName || 'NONE'}</p>
-
               </div>
-
               <div className="p-6 rounded-2xl border bg-green-50 border-green-100 text-green-700 shadow-inner text-center"><p className="text-[9px] font-bold uppercase mb-2 tracking-widest">Billing</p><p className="text-xl font-bold uppercase">{c.paymentMode}</p></div>
-
             </div>
-
-           
 
             {prescriptionUrls.length > 0 && (
-
               <div className="mt-8 space-y-4">
-
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Prescription Records ({prescriptionUrls.length})</p>
-
-                <div className="flex flex-wrap gap-3">
-
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <FileText size={14} /> Prescription Records ({prescriptionUrls.length})
+                </p>
+                <div className="flex flex-wrap gap-4">
                   {prescriptionUrls.map((url, i) => (
-
-                    <div key={i} className="w-20 h-20 rounded-xl overflow-hidden border border-gray-100 cursor-pointer hover:border-blue-500 transition-all shadow-sm" onClick={() => setPreviewUrl(url)}>
-
-                      <img src={url} className="w-full h-full object-cover" />
-
+                    <div key={i} className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-lg cursor-pointer hover:scale-105 transition-all group relative" onClick={() => setPreviewUrl(url)}>
+                      <img src={url} className="w-full h-full object-cover" alt="prescription" />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"><Maximize2 size={20} /></div>
                     </div>
-
                   ))}
-
                 </div>
-
               </div>
-
             )}
-
           </div>
 
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-
+          {/* Card 2: Family Registry */}
+          <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
             <div className="flex items-center justify-between mb-8">
-
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-3"><Users size={20} className="text-blue-500" /> Family Registry</h3>
-
               <span className="px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[9px] font-black text-gray-500 uppercase tracking-widest">{c.familyMembers?.length || 0} Members</span>
-
             </div>
-
             <div className="overflow-x-auto rounded-2xl border border-gray-50">
-
                 <table className="w-full text-left text-xs min-w-[600px]">
-
                   <thead className="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
-
-                    <tr>
-
-                      <th className="px-6 py-4">Name & Gender</th>
-
-                      <th className="px-6 py-4">Birth & Mobile</th>
-
-                      <th className="px-6 py-4">Background</th>
-
-                      <th className="px-6 py-4">Relationship</th>
-
-                    </tr>
-
+                    <tr><th className="px-6 py-4">Name & Gender</th><th className="px-6 py-4">Birth & Mobile</th><th className="px-6 py-4">Relationship</th></tr>
                   </thead>
-
                   <tbody className="divide-y divide-gray-50">
-
                     {c.familyMembers && c.familyMembers.length > 0 ? c.familyMembers.map((m, i) => (
-
                       <tr key={i} className="hover:bg-gray-50 transition-colors">
-
-                        <td className="px-6 py-4">
-
-                          <div className="flex items-center gap-3">
-
-                             <div className="w-8 h-8 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden" onClick={() => m.photoUrl && setPreviewUrl(m.photoUrl)}>
-
-                                {m.photoUrl ? <img src={m.photoUrl} className="w-full h-full object-cover" /> : <User size={14} className="m-auto mt-1.5 text-gray-300" />}
-
-                             </div>
-
-                             <div>
-
-                                <p className="font-bold text-gray-800 capitalize">{m.name || 'Unknown'}</p>
-
-                                <p className="text-[9px] text-blue-500 font-bold uppercase">{m.gender || 'MALE'}</p>
-
-                             </div>
-
-                          </div>
-
-                        </td>
-
-                        <td className="px-6 py-4">
-
-                            <div className="flex flex-col gap-1">
-
-                               <span className="flex items-center gap-1.5 font-bold text-gray-700 text-[10px]"><Calendar size={12} className="text-gray-400" /> {m.dateOfBirth || '-'}</span>
-
-                               <span className="flex items-center gap-1.5 font-bold text-gray-500 text-[10px]"><Smartphone size={12} className="text-gray-400" /> {m.mobile || 'No Mobile'}</span>
-
-                            </div>
-
-                        </td>
-
-                        <td className="px-6 py-4">
-
-                            <div className="flex flex-col gap-1">
-
-                               <span className="flex items-center gap-1.5 font-bold text-gray-700 text-[10px]"><BookOpen size={12} className="text-indigo-400" /> {m.educationQualification || 'N/A'}</span>
-
-                               <span className="flex items-center gap-1.5 font-bold text-gray-500 text-[10px]"><Briefcase size={12} className="text-emerald-400" /> {m.profession || 'N/A'}</span>
-
-                            </div>
-
-                        </td>
-
-                        <td className="px-6 py-4">
-
-                          <span className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black uppercase text-[9px] border border-blue-100 tracking-wider">
-
-                            {m.relationshipWithCardHolder || 'Member'}
-
-                          </span>
-
-                        </td>
-
+                        <td className="px-6 py-4"><p className="font-bold text-gray-800 capitalize">{m.name}</p><p className="text-[9px] text-blue-500 font-bold uppercase">{m.gender}</p></td>
+                        <td className="px-6 py-4"><p className="text-gray-700 font-bold">{m.dateOfBirth}</p><p className="text-[10px] text-gray-400">{m.mobile}</p></td>
+                        <td className="px-6 py-4"><span className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black uppercase text-[9px] border border-blue-100 tracking-wider">{m.relationshipWithCardHolder || 'Member'}</span></td>
                       </tr>
-
                     )) : (
-
-                      <tr><td colSpan={4} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest italic opacity-40">No family members registered.</td></tr>
-
+                      <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-bold uppercase tracking-widest italic opacity-40">No family members registered.</td></tr>
                     )}
-
                   </tbody>
-
                 </table>
-
             </div>
+          </div>
 
+          {/* Card 3: Payment Confirmation */}
+          <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-4 mb-8">
+              <CreditCard size={24} className="text-blue-500" /> Payment Confirmation
+            </h3>
+            <div className="p-8 bg-gray-50 border border-gray-100 rounded-[3rem] flex items-center justify-between group hover:bg-white hover:shadow-2xl hover:border-blue-100 transition-all duration-500">
+               <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 bg-white rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden shadow-inner ring-4 ring-gray-100 group-hover:scale-110 transition-all">
+                    {c.paymentScreenshotUrl ? (
+                      <img src={c.paymentScreenshotUrl} className="w-full h-full object-cover" alt="payment" />
+                    ) : (
+                      <QrCode size={32} className="text-gray-200" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xl font-black text-gray-900 uppercase tracking-tighter">{c.paymentMode} Receipt</p>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Verified ✓</p>
+                  </div>
+               </div>
+               {c.paymentScreenshotUrl && (
+                 <button onClick={() => setPreviewUrl(c.paymentScreenshotUrl!)} className="px-10 py-4 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95 flex items-center gap-3">
+                    <Maximize2 size={16} /> Asset Preview
+                 </button>
+               )}
+            </div>
           </div>
 
         </div>
-
       </div>
-
     </div>
-
   );
-
 };
 
 
