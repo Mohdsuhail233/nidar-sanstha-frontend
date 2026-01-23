@@ -1017,22 +1017,20 @@ const CustomerForm: React.FC = () => {
 
             )}
 
-              <div className="p-5 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-4">
+              {/* CustomerForm ke andar Payment Proof section replace karein */}
+<div className="p-5 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-4">
+  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Proof of Payment</p>
+  
+  {/* LOCAL PREVIEW AGAR FILE SELECT HUI HAI */}
+  {(files.paymentScreenshot || formData.paymentScreenshotUrl) && (
+    <img src={files.paymentScreenshot ? URL.createObjectURL(files.paymentScreenshot) : formData.paymentScreenshotUrl} className="w-20 h-20 object-cover rounded-xl shadow-md border-2 border-white" />
+  )}
 
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Proof of Payment</p>
-
-                  <div className="flex gap-2">
-
-                    <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer hover:bg-black shadow-md transition-all">Upload Receipt<input type="file" className="hidden" onChange={e => e.target.files && handleFileCapture(e.target.files[0], 'paymentScreenshot')} /></label>
-
-                    <button type="button" onClick={() => setShowCamera({ type: 'paymentScreenshot' })} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase active:scale-95 shadow-md transition-all">Capture Proof</button>
-
-                  </div>
-
-                  {(files.paymentScreenshot || formData.paymentScreenshotUrl) && <span className="text-[8px] font-black text-emerald-600 uppercase">Screenshot Attached ✓</span>}
-
-              </div>
-
+  <div className="flex gap-2">
+    <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer">Upload Receipt<input type="file" className="hidden" onChange={e => e.target.files && handleFileCapture(e.target.files[0], 'paymentScreenshot')} /></label>
+    <button type="button" onClick={() => setShowCamera({ type: 'paymentScreenshot' })} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase">Capture</button>
+  </div>
+</div>
             </div>
 
 
@@ -1374,8 +1372,6 @@ const CustomerDetail: React.FC = () => {
             )}
 
           </div>
-
-
 
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
 
