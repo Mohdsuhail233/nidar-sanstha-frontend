@@ -474,7 +474,7 @@ const CustomerForm: React.FC = () => {
 
     bloodTestRequired: false, otherTestRequired: false, paymentMode: 'OFFLINE', familyMembers: [],
 
-    regularMedicine: false, noOfpatient: '0', cardValidityUpto: ''
+    Medicine: false, noOfpatient: '0', cardValidityUpto: ''
 
   });
 
@@ -867,32 +867,23 @@ const CustomerForm: React.FC = () => {
                <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="regularMedicine" checked={formData.regularMedicine} onChange={handleInputChange} className="w-5 h-5 accent-blue-600" /><span className="text-sm font-bold text-gray-700">Regular Medication?</span></label>
 
                {formData.regularMedicine && (
-
-                 <div className="space-y-4 pt-2">
-
-                    <input name="medicineName" value={formData.medicineName || ''} onChange={handleInputChange} className={inputClass} placeholder="Medicine Name" />
-
-                    <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center gap-3">
-
-                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Upload Prescriptions ({prescriptionFiles.length})</p>
-
-                       <div className="flex gap-2">
-
-                          <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer">Add More<input type="file" multiple className="hidden" onChange={e => {
-
-                            if (e.target.files) Array.from(e.target.files).forEach(f => handleFileCapture(f, 'prescriptionPhoto'));
-
-                          }} /></label>
-
-                          <button type="button" onClick={() => setShowCamera({ type: 'prescriptionPhoto' })} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase">Capture</button>
-
-                       </div>
-
-                    </div>
-
-                 </div>
-
-               )}
+  <div className="space-y-4 pt-2">
+    <input name="medicineName" value={formData.medicineName || ''} onChange={handleInputChange} className={inputClass} placeholder="Medicine Name" />
+    <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center gap-3">
+      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Prescriptions ({prescriptionFiles.length})</p>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {/* YE HAI LOCAL PREVIEW LOGIC */}
+        {prescriptionFiles.map((f, i) => (
+          <img key={i} src={URL.createObjectURL(f)} className="w-12 h-12 object-cover rounded-lg border border-white shadow-sm" />
+        ))}
+        <label className="w-12 h-12 bg-gray-900 text-white rounded-lg flex items-center justify-center cursor-pointer shadow-md">
+          <Plus size={18} />
+          <input type="file" multiple className="hidden" onChange={e => e.target.files && Array.from(e.target.files).forEach(f => handleFileCapture(f, 'prescriptionPhoto'))} />
+        </label>
+      </div>
+    </div>
+  </div>
+)}
 
             </div>
 
