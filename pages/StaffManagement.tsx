@@ -265,30 +265,55 @@ const StaffForm: React.FC = () => {
   const removeFamilyMember = (index: number) => {
     setFormData(prev => ({ ...prev, familyMembers: (prev.familyMembers || []).filter((_, i) => i !== index) }));
   };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  const data = new FormData();
+  const submissionData = { ...formData };
+  
+  ['profileImageUrl', 'resumeUrl', 'aadharFrontSideUrl', 'aadharBackSideUrl', 'idCardPdfUrl', 'createdAt', 'familyMembers'].forEach(f => delete (submissionData as any)[f]);
+  
+  data.append('staff', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
+  
+  // --- FILE CLEANING LOGIC START ---
+  
+  // 1. Profile Image
+  if (files.profileImage) {
+    const cleanFile = new File([files.profileImage], files.profileImage.name.replaceAll(/\s+/g, '_'), { type: files.profileImage.type });
+    data.append('profileImage', cleanFile);
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const data = new FormData();
-    const submissionData = { ...formData };
-    
-    ['profileImageUrl', 'resumeUrl', 'aadharFrontSideUrl', 'aadharBackSideUrl', 'idCardPdfUrl', 'createdAt', 'familyMembers'].forEach(f => delete (submissionData as any)[f]);
-    
-    data.append('staff', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
-    
-    if (files.profileImage) data.append('profileImage', files.profileImage);
-    if (files.resume) data.append('resume', files.resume);
-    if (files.aadharFront) data.append('aadharFrontSide', files.aadharFront);
-    if (files.aadharBack) data.append('aadharBackSide', files.aadharBack);
+  // 2. Resume (Sabse zaroori yahi hai)
+  if (files.resume) {
+    const cleanFile = new File([files.resume], files.resume.name.replaceAll(/\s+/g, '_'), { type: files.resume.type });
+    data.append('resume', cleanFile);
+  }
 
-    try {
-      if (id) await api.put(`/staff/update/${id}`, data);
-      else await api.post('/staff/create', data);
-      alert('Personnel record synchronized.');
-      navigate('/staff/list');
-    } catch (err: any) { alert(`Sync Error: ${err.message}`); }
-    finally { setLoading(false); }
-  };
+  // 3. Aadhar Front
+  if (files.aadharFront) {
+    const cleanFile = new File([files.aadharFront], files.aadharFront.name.replaceAll(/\s+/g, '_'), { type: files.aadharFront.type });
+    data.append('aadharFrontSide', cleanFile);
+  }
+
+  // 4. Aadhar Back
+  if (files.aadharBack) {
+    const cleanFile = new File([files.aadharBack], files.aadharBack.name.replaceAll(/\s+/g, '_'), { type: files.aadharBack.type });
+    data.append('aadharBackSide', cleanFile);
+  }
+
+  // --- FILE CLEANING LOGIC END ---
+
+  try {
+    if (id) await api.put(`/staff/update/${id}`, data);
+    else await api.post('/staff/create', data);
+    alert('Personnel record synchronized.');
+    navigate('/staff/list');
+  } catch (err: any) { 
+    alert(`Sync Error: ${err.message}`); 
+  } finally { 
+    setLoading(false); 
+  }
+};
 
   if (fetching) return <div className="h-96 flex flex-col items-center justify-center"><Loader2 className="animate-spin text-blue-600 mb-6" size={56} /><p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">Loading State...</p></div>;
 
