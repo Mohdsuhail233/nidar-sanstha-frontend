@@ -474,21 +474,43 @@ const CustomerForm: React.FC = () => {
       return type === "checkbox";
     }
   };
+const handleFileCapture = (file: File, type: string, index?: number) => {
+  if (type === "patientPhoto") {
+    setFiles((prev) => ({ ...prev, patientPhoto: file }));
+    console.log("✅ Patient photo captured");
+  }
 
-  const handleFileCapture = (file: File, type: string, index?: number) => {
-    if (type === "patientPhoto")
-      setFiles((prev) => ({ ...prev, patientPhoto: file }));
+  if (type === "paymentScreenshot") {
+    setFiles((prev) => ({ ...prev, paymentScreenshot: file }));
+    console.log("✅ Payment screenshot captured");
+  }
 
-    if (type === "paymentScreenshot")
-      setFiles((prev) => ({ ...prev, paymentScreenshot: file }));
+  // ✅ PRESCRIPTION PHOTO - PUSH KARO, REPLACE NAHI
+  if (type === "prescriptionPhoto") {
+    setPrescriptionFiles((prev) => {
+      const updated = [...prev, file];
+      console.log(`✅ Prescription photo added. Total: ${updated.length}`);
+      return updated;
+    });
+  }
 
-    if (type === "prescriptionPhoto")
-      setPrescriptionFiles((prev) => [...prev, file]);
+  if (type === "familyPhoto" && index !== undefined) {
+    setFamilyPhotos((prev) => {
+      const updated = { ...prev, [index]: file };
+      console.log(`✅ Family photo ${index} added`);
+      return updated;
+    });
+  }
+};
 
-    if (type === "familyPhoto" && index !== undefined)
-      setFamilyPhotos((prev) => ({ ...prev, [index]: file }));
-  };
-
+// ✅ REMOVE PRESCRIPTION FILE - IF NEEDED
+const removePrescriptionFile = (index: number) => {
+  setPrescriptionFiles((prev) => {
+    const updated = prev.filter((_, i) => i !== index);
+    console.log(`🗑️ Prescription file ${index} removed. Remaining: ${updated.length}`);
+    return updated;
+  });
+};
   const addFamilyMember = () => {
     setFormData((prev) => ({
       ...prev,
@@ -524,84 +546,100 @@ const CustomerForm: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    setLoading(true);
+  const data = new FormData();
+  const submissionData = { ...formData };
 
-    const data = new FormData();
+  // Remove all file URLs from submission
+  [
+    "patientPhotoUrl",
+    "familyPhotoUrl",
+    "onlinePaymentQrUrl",
+    "paymentScreenshotUrl",
+    "medicinePrescriptionPhotoUrl",
+    "idCardPdfUrl",
+    "createdAt",
+    "createdBy",
+  ].forEach((f) => delete (submissionData as any)[f]);
 
-    const submissionData = { ...formData };
+  // Add JSON data
+  data.append(
+    "data",
+    new Blob([JSON.stringify(submissionData)], { type: "application/json" })
+  );
 
-    [
-      "patientPhotoUrl",
-      "familyPhotoUrl",
-      "onlinePaymentQrUrl",
-      "paymentScreenshotUrl",
-      "medicinePrescriptionPhotoUrl",
-      "idCardPdfUrl",
-      "createdAt",
-      "createdBy",
-     ].forEach((f) => delete (submissionData as any)[f]);
+  // Patient Photo
+  if (files.patientPhoto) {
+    data.append("patientPhoto", files.patientPhoto);
+  }
 
-// agar payment ka naya file upload nahi hua
-if (!files.paymentScreenshot && formData.paymentScreenshotUrl) {
-  submissionData.paymentScreenshotUrl =
-    formData.paymentScreenshotUrl;
-}
+  // Payment Screenshot
+  if (files.paymentScreenshot) {
+    data.append("paymentScreenshot", files.paymentScreenshot);
+  }
 
-if (
-  prescriptionFiles.length === 0 &&
-  formData.medicinePrescriptionPhotoUrl
-) {
-  submissionData.medicinePrescriptionPhotoUrl =
-    formData.medicinePrescriptionPhotoUrl;
-}
-    data.append(
-      "data",
-      new Blob([JSON.stringify(submissionData)], { type: "application/json" })
-    );
-
-    if (files.patientPhoto) data.append("patientPhoto", files.patientPhoto);
-
-    if (files.paymentScreenshot)
-      data.append("paymentScreenshot", files.paymentScreenshot);
-
-    prescriptionFiles.forEach((file) =>
-      data.append("medicinePhoto", file)
-    );
-
-    submissionData.familyMembers?.forEach((_, i) => {
-      if (familyPhotos[i]) data.append("familyPhotos", familyPhotos[i]);
+  // ✅ PRESCRIPTION FILES - FIXED VERSION
+  // Important: Only send NEW prescriptions, old ones already in DB
+  if (prescriptionFiles.length > 0) {
+    prescriptionFiles.forEach((file) => {
+      data.append("medicinePhoto", file); // ✅ Backend field se match karo
     });
+    // New files hain toh old URLs ko clear kar do (naye wale add honge)
+    submissionData.medicinePrescriptionPhotoUrl = ""; 
+  } 
+  // Agar naye prescriptions nahi hain aur purane hain toh preserve karo
+  else if (formData.medicinePrescriptionPhotoUrl && !id) {
+    // Edit mode nahi to purane URLs rakhne ki zaroorat nahi
+  } else if (formData.medicinePrescriptionPhotoUrl && id) {
+    // Edit mode mein purane URLs preserve karo
+    submissionData.medicinePrescriptionPhotoUrl = formData.medicinePrescriptionPhotoUrl;
+  }
 
-    try {
-      const config = { headers: { "Content-Type": "multipart/form-data" } };
-
-      let response;
-      if (id) response = await api.put(`/form/update/${id}`, data, config);
-      else response = await api.post("/form/create", data, config);
-
-      const savedCustomer = response.data;
-
-      if (user?.role === Role.FIELD_STAFF) {
-        alert(
-          `REGISTRATION SUCCESSFUL!\n\nPatient Name: ${savedCustomer.name}\nCard ID: ${savedCustomer.memberIdNo}`
-        );
-
-        navigate("/");
-      } else {
-        alert("Record saved successfully.");
-
-        navigate("/customers/list");
-      }
-    } catch (err: any) {
-      alert(`Sync Failed: ${err.response?.data?.message || "Server Error"}`);
-    } finally {
-      setLoading(false);
+  // Family Photos
+  submissionData.familyMembers?.forEach((_, i) => {
+    if (familyPhotos[i]) {
+      data.append("familyPhotos", familyPhotos[i]);
     }
-  };
+  });
 
+  // Debug: Check FormData
+  console.log("=== FORM DATA DEBUG ===");
+  console.log("Patient Photo:", files.patientPhoto ? "✅ Added" : "❌ Not added");
+  console.log("Payment Screenshot:", files.paymentScreenshot ? "✅ Added" : "❌ Not added");
+  console.log("Prescription Files Count:", prescriptionFiles.length);
+  console.log("Family Photos:", familyPhotos);
+
+  try {
+    const config = { headers: { "Content-Type": "multipart/form-data" } };
+
+    let response;
+    if (id) {
+      response = await api.put(`/form/update/${id}`, data, config);
+    } else {
+      response = await api.post("/form/create", data, config);
+    }
+
+    const savedCustomer = response.data;
+
+    if (user?.role === Role.FIELD_STAFF) {
+      alert(
+        `REGISTRATION SUCCESSFUL!\n\nPatient Name: ${savedCustomer.name}\nCard ID: ${savedCustomer.memberIdNo}`
+      );
+      navigate("/");
+    } else {
+      alert("Record saved successfully.");
+      navigate("/customers/list");
+    }
+  } catch (err: any) {
+    console.error("Upload Error:", err);
+    alert(`Sync Failed: ${err.response?.data?.message || "Server Error"}`);
+  } finally {
+    setLoading(false);
+  }
+};
   if (fetching)
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-4">
