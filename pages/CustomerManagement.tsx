@@ -1,59 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
-
 import { Routes, Route, useNavigate, useParams, Link } from "react-router-dom";
-
 import api from "../services/api";
-
 import { useAuth } from "../App";
-
 import { Customer, Role, FamilyMember } from "../types";
-
 import {
-  Search,
-  Eye,
-  Edit3,
-  ChevronLeft,
-  FileText,
-  Loader2,
-  Calendar,
-  Plus,
-  Trash2,
-  Download,
-  Smartphone,
-  User,
-  Upload,
-  Users,
-  Clock,
-  Camera,
-  Users2,
-  Stethoscope,
-  Info,
-  UserCircle,
-  CreditCard,
-  HeartPulse,
-  MapPin,
-  Save,
-  QrCode,
-  X,
-  Maximize2,
-  BookOpen,
-  Briefcase,
-  CalendarCheck,
-  ShieldCheck,
-  Fingerprint,
-  Droplet,
+  Search, Eye, Edit3, ChevronLeft, FileText, Loader2, Calendar, Plus, Trash2,
+  Download, Smartphone, User, Upload, Users, Clock, Camera, Users2, Stethoscope,
+  Info, UserCircle, CreditCard, HeartPulse, MapPin, Save, QrCode, X, Maximize2,
+  BookOpen, Briefcase, CalendarCheck, ShieldCheck, Fingerprint, Droplet,
 } from "lucide-react";
 
 // Camera Modal Component
-
 const CameraModal: React.FC<{
   onCapture: (file: File) => void;
   onClose: () => void;
 }> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
@@ -62,41 +25,30 @@ const CameraModal: React.FC<{
         const s = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
-
         setStream(s);
-
         if (videoRef.current) videoRef.current.srcObject = s;
       } catch (err) {
         alert("Camera access denied.");
-
         onClose();
       }
     }
-
     startCamera();
-
     return () => stream?.getTracks().forEach((track) => track.stop());
   }, []);
 
   const capture = () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
-
       canvasRef.current.width = videoRef.current.videoWidth;
-
       canvasRef.current.height = videoRef.current.videoHeight;
-
       context?.drawImage(videoRef.current, 0, 0);
-
       canvasRef.current.toBlob(
         (blob) => {
           if (blob) {
             const file = new File([blob], `capture_${Date.now()}.jpg`, {
               type: "image/jpeg",
             });
-
             onCapture(file);
-
             onClose();
           }
         },
@@ -111,7 +63,6 @@ const CameraModal: React.FC<{
       <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative">
         <div className="p-4 border-b flex justify-between items-center">
           <h3 className="text-sm font-bold text-gray-700">Capture Image</h3>
-
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full"
@@ -119,16 +70,13 @@ const CameraModal: React.FC<{
             <X size={20} />
           </button>
         </div>
-
         <video
           ref={videoRef}
           autoPlay
           playsInline
           className="w-full aspect-video object-cover bg-black"
         />
-
         <canvas ref={canvasRef} className="hidden" />
-
         <div className="p-8 text-center">
           <button
             onClick={capture}
@@ -136,7 +84,6 @@ const CameraModal: React.FC<{
           >
             <div className="w-12 h-12 bg-blue-600 rounded-full group-hover:scale-95 transition-all" />
           </button>
-
           <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
             Click to Capture
           </p>
@@ -165,13 +112,11 @@ const PhotoPreviewModal: React.FC<{
       >
         <X size={32} />
       </button>
-
       <img
         src={url}
         alt={title}
         className="max-h-[80vh] w-auto mx-auto rounded-2xl shadow-2xl"
       />
-
       <p className="text-white text-center mt-4 font-bold uppercase tracking-widest text-sm">
         {title}
       </p>
@@ -181,9 +126,7 @@ const PhotoPreviewModal: React.FC<{
 
 const CustomerList: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-
   const [searchValue, setSearchValue] = useState("");
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -192,10 +135,8 @@ const CustomerList: React.FC = () => {
 
   const fetchCustomers = async () => {
     setLoading(true);
-
     try {
       const response = await api.get("/form/all");
-
       setCustomers(Array.isArray(response.data) ? response.data : []);
     } catch {
       setCustomers([]);
@@ -206,25 +147,19 @@ const CustomerList: React.FC = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const query = searchValue.trim();
-
     if (!query) {
       fetchCustomers();
       return;
     }
-
     setLoading(true);
-
     let endpoint = "";
-
     const upperQuery = query.toUpperCase();
 
     if (/^\d{10}$/.test(query)) {
       endpoint = `/form/mobile?mobile=${query}`;
     } else if (query.includes("-") || query.includes("/")) {
       const cleanDate = query.replace(/\//g, "-");
-
       endpoint = `/form/search-by-dob?dob=${cleanDate}`;
     } else if (
       upperQuery.startsWith("NID") ||
@@ -240,17 +175,14 @@ const CustomerList: React.FC = () => {
 
     try {
       const response = await api.get(endpoint);
-
       const results = Array.isArray(response.data)
         ? response.data
         : response.data
         ? [response.data]
         : [];
-
       setCustomers(results);
     } catch (err) {
       console.error("Search node error:", err);
-
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -264,12 +196,10 @@ const CustomerList: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight uppercase">
             Patient Registry
           </h1>
-
           <p className="text-gray-500 font-medium text-sm">
             Active beneficiary management
           </p>
         </div>
-
         <form
           onSubmit={handleSearch}
           className="flex gap-2 w-full lg:w-auto h-12"
@@ -279,7 +209,6 @@ const CustomerList: React.FC = () => {
               className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
               size={18}
             />
-
             <input
               type="text"
               placeholder="Name, Mobile or ID..."
@@ -288,7 +217,6 @@ const CustomerList: React.FC = () => {
               onChange={(e) => setSearchValue(e.target.value)}
             />
           </div>
-
           <button
             type="submit"
             className="bg-blue-600 text-white px-6 rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md active:scale-95 transition-all"
@@ -303,13 +231,10 @@ const CustomerList: React.FC = () => {
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest">
               <th className="px-6 py-4">Patient Profile</th>
-
               <th className="px-6 py-4">Contact Info</th>
-
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
-
           <tbody className="divide-y divide-gray-50">
             {loading ? (
               <tr>
@@ -347,27 +272,22 @@ const CustomerList: React.FC = () => {
                           />
                         )}
                       </div>
-
                       <div>
                         <p className="font-bold text-gray-900 capitalize">
                           {c.name}
                         </p>
-
                         <p className="text-[10px] text-blue-600 font-bold uppercase">
                           {c.gender} {c.bloodGroup ? `| ${c.bloodGroup}` : ""}
                         </p>
                       </div>
                     </div>
                   </td>
-
                   <td className="px-6 py-4">
                     <p className="font-semibold text-gray-700">{c.mobile}</p>
-
                     <p className="text-[10px] text-gray-400 mt-0.5 font-black uppercase tracking-wider">
                       {c.memberIdNo || "ID_PENDING"}
                     </p>
                   </td>
-
                   <td className="px-6 py-4 text-right space-x-1">
                     <Link
                       to={`/customers/view/${c.id}`}
@@ -375,7 +295,6 @@ const CustomerList: React.FC = () => {
                     >
                       <Eye size={18} />
                     </Link>
-
                     <Link
                       to={`/customers/edit/${c.id}`}
                       className="inline-flex p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
@@ -395,15 +314,10 @@ const CustomerList: React.FC = () => {
 
 const CustomerForm: React.FC = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
-
   const { user } = useAuth();
-
   const [loading, setLoading] = useState(false);
-
   const [fetching, setFetching] = useState(!!id);
-
   const [showCamera, setShowCamera] = useState<{
     type: string;
     index?: number;
@@ -419,31 +333,25 @@ const CustomerForm: React.FC = () => {
     profession: "",
     email: "",
     address: "",
-
     bloodTestRequired: false,
     otherTestRequired: false,
     paymentMode: "OFFLINE",
     familyMembers: [],
-
     regularMedicine: false,
     noOfpatient: "0",
     cardValidityUpto: "",
   });
 
   const [files, setFiles] = useState<Record<string, File>>({});
-
   const [prescriptionFiles, setPrescriptionFiles] = useState<File[]>([]);
-
   const [familyPhotos, setFamilyPhotos] = useState<Record<number, File>>({});
 
   useEffect(() => {
     if (id) {
       const fetchData = async () => {
         setFetching(true);
-
         try {
           const resp = await api.get(`/form/view/${id}`);
-
           if (resp.data)
             setFormData({
               ...resp.data,
@@ -451,70 +359,64 @@ const CustomerForm: React.FC = () => {
             });
         } catch (err) {
           console.error("Fetch detail failed:", err);
-
           navigate("/customers/list");
         } finally {
           setFetching(false);
         }
       };
-
       fetchData();
     }
   }, [id, navigate]);
 
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
-      [name]: newFunction() ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
+  };
 
-    function newFunction() {
-      return type === "checkbox";
+  const handleFileCapture = (file: File, type: string, index?: number) => {
+    if (type === "patientPhoto") {
+      setFiles((prev) => ({ ...prev, patientPhoto: file }));
+      console.log("✅ Patient photo captured");
+    }
+
+    if (type === "paymentScreenshot") {
+      setFiles((prev) => ({ ...prev, paymentScreenshot: file }));
+      console.log("✅ Payment screenshot captured");
+    }
+
+    if (type === "prescriptionPhoto") {
+      setPrescriptionFiles((prev) => {
+        const updated = [...prev, file];
+        console.log(`✅ Prescription photo added. Total: ${updated.length}`);
+        return updated;
+      });
+    }
+
+    if (type === "familyPhoto" && index !== undefined) {
+      setFamilyPhotos((prev) => {
+        const updated = { ...prev, [index]: file };
+        console.log(`✅ Family photo ${index} added`);
+        return updated;
+      });
     }
   };
-const handleFileCapture = (file: File, type: string, index?: number) => {
-  if (type === "patientPhoto") {
-    setFiles((prev) => ({ ...prev, patientPhoto: file }));
-    console.log("✅ Patient photo captured");
-  }
 
-  if (type === "paymentScreenshot") {
-    setFiles((prev) => ({ ...prev, paymentScreenshot: file }));
-    console.log("✅ Payment screenshot captured");
-  }
-
-  // ✅ PRESCRIPTION PHOTO - PUSH KARO, REPLACE NAHI
-  if (type === "prescriptionPhoto") {
+  const removePrescriptionFile = (index: number) => {
     setPrescriptionFiles((prev) => {
-      const updated = [...prev, file];
-      console.log(`✅ Prescription photo added. Total: ${updated.length}`);
+      const updated = prev.filter((_, i) => i !== index);
+      console.log(
+        `🗑️ Prescription file ${index} removed. Remaining: ${updated.length}`
+      );
       return updated;
     });
-  }
+  };
 
-  if (type === "familyPhoto" && index !== undefined) {
-    setFamilyPhotos((prev) => {
-      const updated = { ...prev, [index]: file };
-      console.log(`✅ Family photo ${index} added`);
-      return updated;
-    });
-  }
-};
-
-// ✅ REMOVE PRESCRIPTION FILE - IF NEEDED
-const removePrescriptionFile = (index: number) => {
-  setPrescriptionFiles((prev) => {
-    const updated = prev.filter((_, i) => i !== index);
-    console.log(`🗑️ Prescription file ${index} removed. Remaining: ${updated.length}`);
-    return updated;
-  });
-};
   const addFamilyMember = () => {
     setFormData((prev) => ({
       ...prev,
-
       familyMembers: [
         ...(prev.familyMembers || []),
         {
@@ -522,7 +424,6 @@ const removePrescriptionFile = (index: number) => {
           gender: "MALE",
           dateOfBirth: "",
           educationQualification: "",
-
           profession: "",
           relationshipWithCardHolder: "",
           mobile: "",
@@ -533,9 +434,7 @@ const removePrescriptionFile = (index: number) => {
 
   const updateFamilyMember = (index: number, field: string, value: string) => {
     const updated = [...(formData.familyMembers || [])];
-
     updated[index] = { ...updated[index], [field]: value };
-
     setFormData((prev) => ({ ...prev, familyMembers: updated }));
   };
 
@@ -546,110 +445,108 @@ const removePrescriptionFile = (index: number) => {
     }));
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const data = new FormData();
-  const submissionData = { ...formData };
+    const data = new FormData();
+    const submissionData = { ...formData };
 
-  // Remove all file URLs from submission
-  [
-    "patientPhotoUrl",
-    "familyPhotoUrl",
-    "onlinePaymentQrUrl",
-    "paymentScreenshotUrl",
-    "medicinePrescriptionPhotoUrl",
-    "idCardPdfUrl",
-    "createdAt",
-    "createdBy",
-  ].forEach((f) => delete (submissionData as any)[f]);
+    [
+      "patientPhotoUrl",
+      "familyPhotoUrl",
+      "onlinePaymentQrUrl",
+      "paymentScreenshotUrl",
+      "medicinePrescriptionPhotoUrl",
+      "idCardPdfUrl",
+      "createdAt",
+      "createdBy",
+    ].forEach((f) => delete (submissionData as any)[f]);
 
-  // Add JSON data
-  data.append(
-    "data",
-    new Blob([JSON.stringify(submissionData)], { type: "application/json" })
-  );
+    data.append(
+      "data",
+      new Blob([JSON.stringify(submissionData)], { type: "application/json" })
+    );
 
-  console.log("=== FORM SUBMISSION START ===");
+    console.log("=== FORM SUBMISSION START ===");
 
-  // 1. Patient Photo
-  if (files.patientPhoto) {
-    data.append("patientPhoto", files.patientPhoto);
-    console.log("✅ patientPhoto added");
-  }
+    // Patient Photo
+    if (files.patientPhoto) {
+      data.append("patientPhoto", files.patientPhoto);
+      console.log("✅ patientPhoto added");
+    }
 
-  // 2. Payment Screenshot
-  if (files.paymentScreenshot) {
-    data.append("paymentScreenshot", files.paymentScreenshot);  // ✅ CORRECT FIELD
-    console.log("✅ paymentScreenshot added");
-  }
+    // Payment Screenshot
+    if (files.paymentScreenshot) {
+      data.append("paymentScreenshot", files.paymentScreenshot);
+      console.log("✅ paymentScreenshot added");
+    }
 
-  // 3. PRESCRIPTION FILES
-  if (prescriptionFiles.length > 0) {
-    console.log(`>>> Adding ${prescriptionFiles.length} prescription files`);
-    prescriptionFiles.forEach((file, index) => {
-      data.append("medicinePhoto", file);  // ✅ CORRECT FIELD
-      console.log(`  [${index + 1}] medicinePhoto: ${file.name}`);
+    // Prescription Files
+    if (prescriptionFiles.length > 0) {
+      console.log(`>>> Adding ${prescriptionFiles.length} prescription files`);
+      prescriptionFiles.forEach((file, index) => {
+        data.append("medicinePhoto", file);
+        console.log(`  [${index + 1}] medicinePhoto: ${file.name}`);
+      });
+      submissionData.medicinePrescriptionPhotoUrl = "";
+    } else {
+      console.log(">>> No prescription files to upload");
+      if (formData.medicinePrescriptionPhotoUrl && id) {
+        submissionData.medicinePrescriptionPhotoUrl =
+          formData.medicinePrescriptionPhotoUrl;
+        console.log(">>> Keeping existing prescriptions");
+      }
+    }
+
+    // Family Photos
+    submissionData.familyMembers?.forEach((_, i) => {
+      if (familyPhotos[i]) {
+        data.append("familyPhotos", familyPhotos[i]);
+        console.log(`✅ familyPhotos[${i}] added`);
+      }
     });
-    submissionData.medicinePrescriptionPhotoUrl = "";
-  } else {
-    console.log(">>> No prescription files to upload");
-    if (formData.medicinePrescriptionPhotoUrl && id) {
-      submissionData.medicinePrescriptionPhotoUrl = 
-        formData.medicinePrescriptionPhotoUrl;
-      console.log(">>> Keeping existing prescriptions");
+
+    console.log("\n=== FORMDATA CONTENTS ===");
+    console.log("Patient Photo:", files.patientPhoto ? "✅" : "❌");
+    console.log("Payment Screenshot:", files.paymentScreenshot ? "✅" : "❌");
+    console.log("Prescription Files Count:", prescriptionFiles.length);
+    console.log("Family Photos Count:", Object.keys(familyPhotos).length);
+    console.log("=== END FORMDATA ===\n");
+
+    try {
+      const config = { headers: { "Content-Type": "multipart/form-data" } };
+
+      let response;
+      if (id) {
+        console.log(">>> EDIT mode - PUT /form/update/" + id);
+        response = await api.put(`/form/update/${id}`, data, config);
+      } else {
+        console.log(">>> CREATE mode - POST /form/create");
+        response = await api.post("/form/create", data, config);
+      }
+
+      const savedCustomer = response.data;
+      console.log("✅ SAVED: " + savedCustomer.name);
+
+      if (user?.role === Role.FIELD_STAFF) {
+        alert(
+          `REGISTRATION SUCCESSFUL!\n\nPatient Name: ${savedCustomer.name}\nCard ID: ${savedCustomer.memberIdNo}`
+        );
+        navigate("/");
+      } else {
+        alert("Record saved successfully.");
+        navigate("/customers/list");
+      }
+    } catch (err: any) {
+      console.error("❌ Upload Error:", err);
+      alert(`Sync Failed: ${err.response?.data?.message || "Server Error"}`);
+    } finally {
+      setLoading(false);
+      console.log("=== FORM SUBMISSION END ===\n");
     }
-  }
+  };
 
-  // 4. Family Photos
-  submissionData.familyMembers?.forEach((_, i) => {
-    if (familyPhotos[i]) {
-      data.append("familyPhotos", familyPhotos[i]);
-      console.log(`✅ familyPhotos[${i}] added`);
-    }
-  });
-
-  // Debug: Check FormData
-  console.log("\n=== FORMDATA CONTENTS ===");
-  console.log("Patient Photo:", files.patientPhoto ? "✅" : "❌");
-  console.log("Payment Screenshot:", files.paymentScreenshot ? "✅" : "❌");
-  console.log("Prescription Files Count:", prescriptionFiles.length);
-  console.log("Family Photos Count:", Object.keys(familyPhotos).length);
-  console.log("=== END FORMDATA ===\n");
-
-  try {
-    const config = { headers: { "Content-Type": "multipart/form-data" } };
-
-    let response;
-    if (id) {
-      console.log(">>> EDIT mode - PUT /form/update/" + id);
-      response = await api.put(`/form/update/${id}`, data, config);
-    } else {
-      console.log(">>> CREATE mode - POST /form/create");
-      response = await api.post("/form/create", data, config);
-    }
-
-    const savedCustomer = response.data;
-    console.log("✅ SAVED: " + savedCustomer.name);
-
-    if (user?.role === Role.FIELD_STAFF) {
-      alert(
-        `REGISTRATION SUCCESSFUL!\n\nPatient Name: ${savedCustomer.name}\nCard ID: ${savedCustomer.memberIdNo}`
-      );
-      navigate("/");
-    } else {
-      alert("Record saved successfully.");
-      navigate("/customers/list");
-    }
-  } catch (err: any) {
-    console.error("❌ Upload Error:", err);
-    alert(`Sync Failed: ${err.response?.data?.message || "Server Error"}`);
-  } finally {
-    setLoading(false);
-    console.log("=== FORM SUBMISSION END ===\n");
-  }
-};
   if (fetching)
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-4">
@@ -694,8 +591,6 @@ const removePrescriptionFile = (index: number) => {
         onSubmit={handleSubmit}
         className="space-y-12 bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm"
       >
-        {/* Record Metadata display in edit mode */}
-
         {id && formData.createdBy && (
           <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
@@ -757,6 +652,7 @@ const removePrescriptionFile = (index: number) => {
                   Upload Photo
                   <input
                     type="file"
+                    accept="image/*"
                     className="hidden"
                     onChange={(e) =>
                       e.target.files &&
@@ -930,6 +826,7 @@ const removePrescriptionFile = (index: number) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* LEFT: Blood Tests */}
             <div className="space-y-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -968,6 +865,7 @@ const removePrescriptionFile = (index: number) => {
               )}
             </div>
 
+            {/* RIGHT: Medication Info ONLY */}
             <div className="space-y-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -983,50 +881,69 @@ const removePrescriptionFile = (index: number) => {
               </label>
 
               {formData.regularMedicine && (
-                <div className="space-y-4 pt-2">
-                  <input
-                    name="medicineName"
-                    value={formData.medicineName || ""}
-                    onChange={handleInputChange}
-                    className={inputClass}
-                    placeholder="Medicine Name"
-                  />
-
-                  <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center gap-3">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                      Prescriptions ({prescriptionFiles.length})
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {/* YE HAI LOCAL PREVIEW LOGIC */}
-
-                      {prescriptionFiles.map((f, i) => (
-                        <img
-                          key={i}
-                          src={URL.createObjectURL(f)}
-                          className="w-12 h-12 object-cover rounded-lg border border-white shadow-sm"
-                        />
-                      ))}
-
-                      <label className="w-12 h-12 bg-gray-900 text-white rounded-lg flex items-center justify-center cursor-pointer shadow-md">
-                        <Plus size={18} />
-
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) =>
-                            e.target.files &&
-                            Array.from(e.target.files).forEach((f) =>
-                              handleFileCapture(f, "prescriptionPhoto")
-                            )
-                          }
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
+                <input
+                  name="medicineName"
+                  value={formData.medicineName || ""}
+                  onChange={handleInputChange}
+                  className={inputClass}
+                  placeholder="Medicine Name"
+                />
               )}
+            </div>
+          </div>
+
+          {/* ✅ PRESCRIPTION SECTION - ALWAYS VISIBLE (OUTSIDE medication conditional) */}
+          <div className="mt-8 space-y-4 pt-8 border-t border-gray-100">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+              📋 Medical Prescriptions (Optional)
+            </h4>
+
+            <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center gap-3">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                Prescriptions ({prescriptionFiles.length})
+              </p>
+
+              <div className="flex flex-wrap gap-2 justify-center">
+                {/* LOCAL PREVIEW LOGIC */}
+                {prescriptionFiles.map((f, i) => (
+                  <div key={i} className="relative group">
+                    <img
+                      src={URL.createObjectURL(f)}
+                      className="w-12 h-12 object-cover rounded-lg border border-white shadow-sm"
+                    />
+                    {/* Optional: Delete button */}
+                    <button
+                      type="button"
+                      onClick={() => removePrescriptionFile(i)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* UPLOAD BUTTON */}
+                <label className="w-12 h-12 bg-gray-900 text-white rounded-lg flex items-center justify-center cursor-pointer shadow-md hover:bg-black transition-all">
+                  <Plus size={18} />
+
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) =>
+                      e.target.files &&
+                      Array.from(e.target.files).forEach((f) =>
+                        handleFileCapture(f, "prescriptionPhoto")
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <p className="text-[8px] text-gray-400 italic">
+                Tip: Upload multiple prescription images if available
+              </p>
             </div>
           </div>
         </section>
@@ -1086,6 +1003,7 @@ const removePrescriptionFile = (index: number) => {
                         Upload
                         <input
                           type="file"
+                          accept="image/*"
                           className="hidden"
                           onChange={(e) =>
                             e.target.files &&
@@ -1272,14 +1190,11 @@ const removePrescriptionFile = (index: number) => {
                 </div>
               )}
 
-              {/* CustomerForm ke andar Payment Proof section replace karein */}
-
+              {/* PAYMENT SECTION */}
               <div className="p-5 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center gap-4">
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                   Proof of Payment
                 </p>
-
-                {/* LOCAL PREVIEW AGAR FILE SELECT HUI HAI */}
 
                 {(files.paymentScreenshot || formData.paymentScreenshotUrl) && (
                   <img
@@ -1293,10 +1208,11 @@ const removePrescriptionFile = (index: number) => {
                 )}
 
                 <div className="flex gap-2">
-                  <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer">
+                  <label className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-bold uppercase cursor-pointer hover:bg-black transition-all">
                     Upload Receipt
                     <input
                       type="file"
+                      accept="image/*"
                       className="hidden"
                       onChange={(e) =>
                         e.target.files &&
@@ -1310,8 +1226,10 @@ const removePrescriptionFile = (index: number) => {
 
                   <button
                     type="button"
-                    onClick={() => setShowCamera({ type: "paymentScreenshot" })}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase"
+                    onClick={() =>
+                      setShowCamera({ type: "paymentScreenshot" })
+                    }
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase hover:bg-blue-700 transition-all"
                   >
                     Capture
                   </button>
@@ -1350,94 +1268,64 @@ const removePrescriptionFile = (index: number) => {
   );
 };
 
+// ... Rest of the CustomerDetail and CustomerManagement components remain the same ...
+
 const CustomerDetail: React.FC = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
-
   const [c, setC] = useState<Customer | null>(null);
-
   const [loading, setLoading] = useState(true);
-
   const [downloading, setDownloading] = useState(false);
-
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-
       try {
         const resp = await api.get(`/form/view/${id}`);
-
         if (resp.data) setC(resp.data);
       } catch (err: any) {
         console.error("Fetch detail failed:", err);
-
         alert(
           err.response?.status === 404
             ? "Patient data not found (404)."
             : "Fetch failed."
         );
-
         setC(null);
       } finally {
         setLoading(false);
       }
     };
-
     fetch();
   }, [id]);
 
   const downloadIdCard = async () => {
     if (!id) return;
-
     setDownloading(true);
-
     try {
-      // 1. fetch url from backend
-
       const response = await api.post(`/patient/generate-idcard/${id}`);
-
       const cloudUrl =
         typeof response.data === "string"
           ? response.data
           : response.data?.url || response.data?.data;
 
       if (cloudUrl && cloudUrl.startsWith("http")) {
-        // use axios to download instantly
-
         const fileResponse = await fetch(cloudUrl);
-
         const blob = await fileResponse.blob();
-
-        // make a temporary link for browser download
-
         const url = window.URL.createObjectURL(blob);
-
         const link = document.createElement("a");
         link.href = url;
-
-        //filename showin in download
         const fileName = `ID_Card_${c?.memberIdNo || id}.pdf`;
-
         link.setAttribute("download", fileName);
-
         document.body.appendChild(link);
-
-        link.click(); // Automatic download start
-
-        // 4. Safai (Cleanup)
-
+        link.click();
         link.parentNode?.removeChild(link);
-
         window.URL.revokeObjectURL(url);
       } else {
         alert("PDF generation link missing.");
       }
     } catch (err) {
       console.error("Download Error:", err);
-
       alert("Identity PDF generation failed.");
     } finally {
       setDownloading(false);
@@ -1465,7 +1353,7 @@ const CustomerDetail: React.FC = () => {
     );
 
   const prescriptionUrls = c.medicinePrescriptionPhotoUrl
-    ? c.medicinePrescriptionPhotoUrl.split(",")
+    ? c.medicinePrescriptionPhotoUrl.split(",").filter(u => u.trim())
     : [];
 
   return (
@@ -1637,8 +1525,6 @@ const CustomerDetail: React.FC = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-10">
-          {/* 1. Medical Summary & Prescription Records */}
-
           <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-4 mb-10">
               <Stethoscope size={24} className="text-blue-500" /> Medical
@@ -1699,8 +1585,6 @@ const CustomerDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* PRESCRIPTION GALLERY LOGIC */}
-
             {prescriptionUrls.length > 0 && (
               <div className="mt-8 space-y-4">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
@@ -1730,8 +1614,6 @@ const CustomerDetail: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* 2. Family Registry Section */}
 
           <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
             <div className="flex items-center justify-between mb-8">
@@ -1852,8 +1734,6 @@ const CustomerDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* 3. Transaction Proof Preview (Payment Section) */}
-
           <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-10">
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-4 mb-8">
               <CreditCard size={24} className="text-blue-500" /> Payment
@@ -1905,7 +1785,6 @@ const CustomerManagement: React.FC = () => (
   <Routes>
     <Route path="list" element={<CustomerList />} />
     <Route path="create" element={<CustomerForm />} />
-
     <Route path="edit/:id" element={<CustomerForm />} />
     <Route path="view/:id" element={<CustomerDetail />} />
   </Routes>
