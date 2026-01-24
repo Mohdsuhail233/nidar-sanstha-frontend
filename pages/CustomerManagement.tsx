@@ -568,7 +568,7 @@ if (
       data.append("paymentScreenshot", files.paymentScreenshot);
 
     prescriptionFiles.forEach((file) =>
-      data.append("medicinePrescriptionPhoto", file)
+      data.append("medicinePhoto", file)
     );
 
     submissionData.familyMembers?.forEach((_, i) => {
