@@ -544,13 +544,12 @@ const CustomerForm: React.FC = () => {
       "createdBy",
      ].forEach((f) => delete (submissionData as any)[f]);
 
-// Preserve payment screenshot if not re-uploaded
+// agar payment ka naya file upload nahi hua
 if (!files.paymentScreenshot && formData.paymentScreenshotUrl) {
   submissionData.paymentScreenshotUrl =
     formData.paymentScreenshotUrl;
 }
 
-// Preserve prescription photos if not re-uploaded
 if (
   prescriptionFiles.length === 0 &&
   formData.medicinePrescriptionPhotoUrl
