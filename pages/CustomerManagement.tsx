@@ -571,58 +571,67 @@ const removePrescriptionFile = (index: number) => {
     new Blob([JSON.stringify(submissionData)], { type: "application/json" })
   );
 
-  // Patient Photo
+  console.log("=== FORM SUBMISSION START ===");
+
+  // 1. Patient Photo
   if (files.patientPhoto) {
     data.append("patientPhoto", files.patientPhoto);
+    console.log("✅ patientPhoto added");
   }
 
-  // Payment Screenshot
+  // 2. Payment Screenshot
   if (files.paymentScreenshot) {
-    data.append("paymentScreenshot", files.paymentScreenshot);
+    data.append("paymentScreenshot", files.paymentScreenshot);  // ✅ CORRECT FIELD
+    console.log("✅ paymentScreenshot added");
   }
 
-  // ✅ PRESCRIPTION FILES - FIXED VERSION
-  // Important: Only send NEW prescriptions, old ones already in DB
+  // 3. PRESCRIPTION FILES
   if (prescriptionFiles.length > 0) {
-    prescriptionFiles.forEach((file) => {
-      data.append("medicinePhoto", file); // ✅ Backend field se match karo
+    console.log(`>>> Adding ${prescriptionFiles.length} prescription files`);
+    prescriptionFiles.forEach((file, index) => {
+      data.append("medicinePhoto", file);  // ✅ CORRECT FIELD
+      console.log(`  [${index + 1}] medicinePhoto: ${file.name}`);
     });
-    // New files hain toh old URLs ko clear kar do (naye wale add honge)
-    submissionData.medicinePrescriptionPhotoUrl = ""; 
-  } 
-  // Agar naye prescriptions nahi hain aur purane hain toh preserve karo
-  else if (formData.medicinePrescriptionPhotoUrl && !id) {
-    // Edit mode nahi to purane URLs rakhne ki zaroorat nahi
-  } else if (formData.medicinePrescriptionPhotoUrl && id) {
-    // Edit mode mein purane URLs preserve karo
-    submissionData.medicinePrescriptionPhotoUrl = formData.medicinePrescriptionPhotoUrl;
+    submissionData.medicinePrescriptionPhotoUrl = "";
+  } else {
+    console.log(">>> No prescription files to upload");
+    if (formData.medicinePrescriptionPhotoUrl && id) {
+      submissionData.medicinePrescriptionPhotoUrl = 
+        formData.medicinePrescriptionPhotoUrl;
+      console.log(">>> Keeping existing prescriptions");
+    }
   }
 
-  // Family Photos
+  // 4. Family Photos
   submissionData.familyMembers?.forEach((_, i) => {
     if (familyPhotos[i]) {
       data.append("familyPhotos", familyPhotos[i]);
+      console.log(`✅ familyPhotos[${i}] added`);
     }
   });
 
   // Debug: Check FormData
-  console.log("=== FORM DATA DEBUG ===");
-  console.log("Patient Photo:", files.patientPhoto ? "✅ Added" : "❌ Not added");
-  console.log("Payment Screenshot:", files.paymentScreenshot ? "✅ Added" : "❌ Not added");
+  console.log("\n=== FORMDATA CONTENTS ===");
+  console.log("Patient Photo:", files.patientPhoto ? "✅" : "❌");
+  console.log("Payment Screenshot:", files.paymentScreenshot ? "✅" : "❌");
   console.log("Prescription Files Count:", prescriptionFiles.length);
-  console.log("Family Photos:", familyPhotos);
+  console.log("Family Photos Count:", Object.keys(familyPhotos).length);
+  console.log("=== END FORMDATA ===\n");
 
   try {
     const config = { headers: { "Content-Type": "multipart/form-data" } };
 
     let response;
     if (id) {
+      console.log(">>> EDIT mode - PUT /form/update/" + id);
       response = await api.put(`/form/update/${id}`, data, config);
     } else {
+      console.log(">>> CREATE mode - POST /form/create");
       response = await api.post("/form/create", data, config);
     }
 
     const savedCustomer = response.data;
+    console.log("✅ SAVED: " + savedCustomer.name);
 
     if (user?.role === Role.FIELD_STAFF) {
       alert(
@@ -634,10 +643,11 @@ const removePrescriptionFile = (index: number) => {
       navigate("/customers/list");
     }
   } catch (err: any) {
-    console.error("Upload Error:", err);
+    console.error("❌ Upload Error:", err);
     alert(`Sync Failed: ${err.response?.data?.message || "Server Error"}`);
   } finally {
     setLoading(false);
+    console.log("=== FORM SUBMISSION END ===\n");
   }
 };
   if (fetching)
