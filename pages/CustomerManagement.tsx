@@ -476,7 +476,7 @@ const CustomerForm: React.FC = () => {
 
     bloodTestRequired: false, otherTestRequired: false, paymentMode: 'OFFLINE', familyMembers: [],
 
-    Medicine: false, noOfpatient: '0', cardValidityUpto: ''
+    regularMedicine: false, noOfpatient: '0', cardValidityUpto: ''
 
   });
 
