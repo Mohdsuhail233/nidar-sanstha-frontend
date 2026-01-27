@@ -15,47 +15,19 @@ const CameraModal: React.FC<{
   onCapture: (file: File) => void;
   onClose: () => void;
 }> = ({ onCapture, onClose }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    async function startCamera() {
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        setStream(s);
-        if (videoRef.current) videoRef.current.srcObject = s;
-      } catch (err) {
-        alert("Camera access denied.");
-        onClose();
-      }
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log("✅ Photo captured:", file.name);
+      onCapture(file);
+      onClose();
     }
-    startCamera();
-    return () => stream?.getTracks().forEach((track) => track.stop());
-  }, []);
+  };
 
-  const capture = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      context?.drawImage(videoRef.current, 0, 0);
-      canvasRef.current.toBlob(
-        (blob) => {
-          if (blob) {
-            const file = new File([blob], `capture_${Date.now()}.jpg`, {
-              type: "image/jpeg",
-            });
-            onCapture(file);
-            onClose();
-          }
-        },
-        "image/jpeg",
-        0.9
-      );
-    }
+  const handleOpenCamera = () => {
+    inputRef.current?.click();
   };
 
   return (
@@ -70,22 +42,27 @@ const CameraModal: React.FC<{
             <X size={20} />
           </button>
         </div>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className="w-full aspect-video object-cover bg-black"
+
+        {/* ✅ HIDDEN INPUT - Native Camera */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"  // ✅ MOBILE CAMERA
+          onChange={handleFileSelect}
+          className="hidden"
         />
-        <canvas ref={canvasRef} className="hidden" />
-        <div className="p-8 text-center">
+
+        <div className="p-20 text-center">
           <button
-            onClick={capture}
-            className="w-16 h-16 rounded-full border-4 border-blue-600 flex items-center justify-center group mx-auto transition-transform active:scale-90"
+            onClick={handleOpenCamera}
+            className="w-16 h-16 rounded-full border-4 border-blue-600 flex items-center justify-center group mx-auto transition-transform active:scale-90 bg-blue-600 text-white"
           >
-            <div className="w-12 h-12 bg-blue-600 rounded-full group-hover:scale-95 transition-all" />
+            <Camera size={32} />
           </button>
+
           <p className="mt-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Click to Capture
+            Click to Open Camera
           </p>
         </div>
       </div>
