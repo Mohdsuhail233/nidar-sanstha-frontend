@@ -36,53 +36,69 @@ import {
 
 // ==========================================
 // 1. CAMERA MODAL COMPONENT
-// ==========================================
-const CameraModal: React.FC<{ onCapture: (file: File) => void; onClose: () => void; title?: string }> = ({ onCapture, onClose, title }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+// ==========================================// ✅ FIXED VERSION
 
-  useEffect(() => {
-    async function startCamera() {
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        setStream(s);
-        if (videoRef.current) videoRef.current.srcObject = s;
-      } catch (err) {
-        alert("Camera access denied or not found.");
-        onClose();
-      }
-    }
-    startCamera();
-    return () => stream?.getTracks().forEach(track => track.stop());
-  }, []);
+const CameraModal: React.FC<{ 
+  onCapture: (file: File) => void; 
+  onClose: () => void; 
+  title?: string 
+}> = ({ onCapture, onClose, title }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const capture = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d');
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      context?.drawImage(videoRef.current, 0, 0);
-      canvasRef.current.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], `staff_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
-          onCapture(file);
-          onClose();
-        }
-      }, 'image/jpeg', 0.9);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log("✅ Photo captured:", file.name);
+      onCapture(file);
+      onClose();
     }
+  };
+
+  const handleOpenCamera = () => {
+    inputRef.current?.click();
   };
 
   return (
     <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
       <div className="bg-gray-900 w-full max-w-xl rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-6 right-6 text-white/50 hover:text-white z-10 p-2 bg-white/10 rounded-full transition-all"><X size={24} /></button>
-        <video ref={videoRef} autoPlay playsInline className="w-full aspect-square object-cover" />
-        <canvas ref={canvasRef} className="hidden" />
+        
+        {/* ✅ HIDDEN INPUT - Native Mobile Camera */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"  // ✅ MOBILE REAR CAMERA
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        <button 
+          onClick={onClose} 
+          className="absolute top-6 right-6 text-white/50 hover:text-white z-10 p-2 bg-white/10 rounded-full transition-all"
+        >
+          <X size={24} />
+        </button>
+
+        {/* Placeholder instead of video */}
+        <div className="w-full aspect-square bg-black flex items-center justify-center">
+          <div className="text-center text-white/40">
+            <Camera size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+              Ready to Capture
+            </p>
+          </div>
+        </div>
+
         <div className="p-10 flex flex-col items-center">
-          <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-8">{title || 'Personnel Node Capture'}</p>
-          <button onClick={capture} className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center group active:scale-90 transition-all">
-             <div className="w-14 h-14 bg-white rounded-full group-hover:scale-90 transition-all" />
+          <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-8">
+            {title || 'Personnel Node Capture'}
+          </p>
+          
+          <button 
+            onClick={handleOpenCamera}
+            className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center group active:scale-90 transition-all bg-white/10 hover:bg-white/20"
+          >
+            <div className="w-14 h-14 bg-white rounded-full group-hover:scale-90 transition-all" />
           </button>
         </div>
       </div>
