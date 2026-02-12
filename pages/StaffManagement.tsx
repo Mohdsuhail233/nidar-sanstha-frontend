@@ -46,13 +46,49 @@ const CameraModal: React.FC<{
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      console.log("✅ Photo captured:", file.name);
-      onCapture(file);
-      onClose();
-    }
-  };
+   const file = e.target.files?.[0];
+   if (!file) return;
+ 
+   const reader = new FileReader();
+ 
+   reader.onload = (event) => {
+     const img = new Image();
+     img.onload = () => {
+       const canvas = document.createElement("canvas");
+       const ctx = canvas.getContext("2d");
+ 
+       // detect orientation
+       if (img.height > img.width) {
+         // vertical image
+         canvas.width = img.width;
+         canvas.height = img.height;
+         ctx?.drawImage(img, 0, 0);
+       } else {
+         // rotate 90deg if needed
+         canvas.width = img.height;
+         canvas.height = img.width;
+         ctx?.rotate(90 * Math.PI / 180);
+         ctx?.drawImage(img, 0, -img.height);
+       }
+ 
+       canvas.toBlob((blob) => {
+         if (blob) {
+           const fixedFile = new File(
+             [blob],
+             `capture_${Date.now()}.jpg`,
+             { type: "image/jpeg" }
+           );
+           onCapture(fixedFile);
+           onClose();
+         }
+       }, "image/jpeg", 0.95);
+     };
+ 
+     img.src = event.target?.result as string;
+   };
+ 
+   reader.readAsDataURL(file);
+ };
 
   const handleOpenCamera = () => {
     inputRef.current?.click();
