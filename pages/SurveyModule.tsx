@@ -256,10 +256,32 @@ const SurveySubmit: React.FC = () => {
 // ==========================================
 // 4. ANALYTICS (ADMIN VIEW)
 // ==========================================
+
+// Helper: Check if a value is an image URL or image filename
+const isImageValue = (val: any): boolean => {
+  if (typeof val !== 'string') return false;
+  const str = val.trim().toLowerCase();
+  // Check for image file extensions
+  if (/\.(png|jpg|jpeg|gif|webp|bmp|svg)(\?.*)?$/i.test(str)) return true;
+  // Check for URL patterns that are likely images
+  if ((str.startsWith('http://') || str.startsWith('https://')) && 
+      (str.includes('/images/') || str.includes('/uploads/') || str.includes('/photos/'))) return true;
+  return false;
+};
+
+// Helper: Convert filename to full URL if it's not already a URL
+const getImageUrl = (val: string): string => {
+  const str = val.trim();
+  if (str.startsWith('http://') || str.startsWith('https://')) return str;
+  // Construct URL using API base - backend serves uploaded files
+  return `https://nidarsanstha.xyz/uploads/${str}`;
+};
+
 const SurveyResults: React.FC = () => {
   const { formId } = useParams();
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     api.get(`/survey/results/${formId}`).then(res => {
@@ -275,6 +297,29 @@ const SurveyResults: React.FC = () => {
 
   return (
     <div className="p-6 space-y-10 pb-20 animate-in fade-in">
+      {/* Image Preview Modal */}
+      {previewUrl && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button 
+              onClick={() => setPreviewUrl(null)}
+              className="absolute -top-12 right-0 text-white font-black text-sm uppercase tracking-widest hover:text-red-400 transition-colors"
+            >
+              ✕ Close
+            </button>
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full h-full object-contain rounded-3xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900 flex items-center gap-4">
           <Activity className="text-blue-600" size={36}/> Analytics Dashboard
@@ -305,7 +350,35 @@ const SurveyResults: React.FC = () => {
                   {Object.entries(res.answers || res.data || {}).map(([key, val]) => (
                     <div key={key} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-50 hover:border-blue-100 transition-all">
                       <span className="text-[9px] font-black text-blue-400 uppercase block mb-3 tracking-[0.2em]">{key.replace(/_/g, ' ')}</span>
-                      <span className="text-base font-bold text-gray-800 break-words">{String(val)}</span>
+                      {isImageValue(val) ? (
+                        <div 
+                          className="mt-2 cursor-pointer group relative"
+                          onClick={() => setPreviewUrl(getImageUrl(String(val)))}
+                        >
+                          <img 
+                            src={getImageUrl(String(val))} 
+                            alt={key}
+                            className="w-full h-40 object-cover rounded-xl border-2 border-white shadow-md group-hover:scale-[1.02] transition-transform"
+                            onError={(e) => {
+                              // If image fails to load, show filename as fallback
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="hidden text-base font-bold text-gray-800 break-words">
+                            <div className="flex items-center gap-2">
+                              <ImageIcon size={16} className="text-gray-400" />
+                              {String(val)}
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center transition-opacity">
+                            <Eye size={24} className="text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-base font-bold text-gray-800 break-words">{String(val)}</span>
+                      )}
                     </div>
                   ))}
                 </div>
