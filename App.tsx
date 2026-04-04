@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const logout = () => {
     setUser(null);
     sessionStorage.removeItem('nidar_user');
+    localStorage.removeItem('token');
   };
 
   const getDashboardPath = () => {

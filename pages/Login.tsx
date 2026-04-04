@@ -20,6 +20,8 @@ const Login: React.FC = () => {
   setIsLoading(true);
   setError('');
   setIsNetworkError(false);
+  // Clear any stale token from previous sessions
+  localStorage.removeItem('token');
 
   try {
     const response = await api.post('/auth/login', { mobile, password });

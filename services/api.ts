@@ -11,8 +11,9 @@ const api = axios.create({
 // --- REQUEST INTERCEPTOR: Har request ke saath token bhejne ke liye ---
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Login ke waqt hum ise save karenge
-    if (token) {
+    const token = localStorage.getItem('token');
+    // Don't send token on login requests - stale tokens cause "Invalid Credentials"
+    if (token && !config.url?.includes('/auth/login')) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
