@@ -61,10 +61,12 @@ const Layout: React.FC = () => {
         <div className="h-full flex flex-col">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <ShieldCheck className="text-white" size={20} />
-              </div>
-              <span className="font-black text-xl tracking-tight text-gray-900 leading-tight">Nidar Sanstha</span>
+              <img 
+                src="/DUA E KHAIR Logo.png" 
+                alt="Logo" 
+                className="w-8 h-8 rounded-lg object-contain"
+              />
+              <span className="font-black text-xl tracking-tight text-gray-900 leading-tight">Dua-E-Khair Foundation</span>
             </div>
             <button className="md:hidden" onClick={() => setIsSidebarOpen(false)}>
               <X size={24} />
@@ -118,7 +120,7 @@ const Layout: React.FC = () => {
           >
             <Menu size={24} />
           </button>
-          <span className="font-black text-lg text-gray-900">Nidar Sanstha</span>
+          <span className="font-black text-lg text-gray-900">Dua-E-Khair Foundation</span>
           <div className="w-10"></div>
         </header>
 

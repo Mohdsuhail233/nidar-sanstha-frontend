@@ -378,7 +378,7 @@ const handleSubmit = async (e: React.FormEvent) => {
        
        <div className="flex items-center gap-8">
         <button onClick={() => navigate(-1)} className="p-6 bg-white hover:bg-gray-50 rounded-[2.5rem] shadow-sm border border-gray-100 transition-all active:scale-95"><ChevronLeft size={32} /></button>
-        <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tight">{id ? 'Edit Staff Node' : 'Register New Personnel'}</h1>
+        <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tight">{id ? 'Edit Staff ' : 'Register New Employe'}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-12 bg-white rounded-[4rem] shadow-sm border border-gray-100 p-12 md:p-16">
@@ -482,7 +482,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         <button disabled={loading} type="submit" className="w-full py-10 bg-blue-600 text-white font-black rounded-[3.5rem] shadow-2xl flex items-center justify-center gap-8 hover:bg-blue-700 transition-all text-2xl uppercase tracking-[0.3em] active:scale-[0.98]">
           {loading ? <Loader2 size={48} className="animate-spin" /> : <Save size={48} />} 
-          Synchronize Sync
+          Submit
         </button>
       </form>
     </div>

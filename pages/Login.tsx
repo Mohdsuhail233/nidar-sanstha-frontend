@@ -61,11 +61,13 @@ const Login: React.FC = () => {
 
         {/* Header */}
         <div className="p-10 pt-16 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-[2rem] mb-6 text-white shadow-xl shadow-blue-200">
-            <ShieldAlert size={40} />
-          </div>
+          <img 
+            src="/DUA E KHAIR Logo.png" 
+            alt="Dua-E-Khair Foundation Logo" 
+            className="w-32 h-32 mx-auto mb-6 object-contain drop-shadow-lg"
+          />
           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-            Nidar Sanstha
+            Dua-E-Khair Foundation
           </h1>
           <p className="text-gray-400 font-semibold text-sm">
             Operation & Management Portal

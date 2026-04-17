@@ -3,12 +3,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-console.log("Nidar Sanstha Portal: App starting...");
+console.log("Dua-E-Khair Foundation Portal: App starting...");
 
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
-  console.error("Nidar Sanstha Portal: Root element not found.");
+  console.error("Dua-E-Khair Foundation Portal: Root element not found.");
 } else {
   try {
     const root = ReactDOM.createRoot(rootElement);
@@ -17,9 +17,9 @@ if (!rootElement) {
         <App />
       </React.StrictMode>
     );
-    console.log("Nidar Sanstha Portal: App rendered successfully.");
+    console.log("Dua-E-Khair Foundation Portal: App rendered successfully.");
   } catch (err: any) {
-    console.error("Nidar Sanstha Portal: Critical Render Error:", err);
+    console.error("Dua-E-Khair Foundation Portal: Critical Render Error:", err);
     rootElement.innerHTML = `
       <div style="height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; font-family: sans-serif; text-align: center; padding: 20px; background: #fff;">
         <h2 style="color: #ef4444; margin-bottom: 10px;">Application Loading Error</h2>

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../App';
 import { FormCount, Role, Customer } from '../types';
-import { 
-  PlusCircle, 
-  Search, 
+import {
+  PlusCircle,
+  Search,
   FileText,
   Clock,
   ArrowRight,
@@ -48,24 +48,24 @@ const Dashboard: React.FC = () => {
   }, [user]);
 
   const stats = [
-    { 
-      label: "Today's Forms", 
-      value: counts?.today || 0, 
-      icon: <Clock size={24} />, 
+    {
+      label: "Today's Forms",
+      value: counts?.today || 0,
+      icon: <Clock size={24} />,
       color: "bg-blue-50 text-blue-500",
       badge: "Today"
     },
-    { 
-      label: "Monthly Progress", 
-      value: counts?.monthly || 0, 
-      icon: <CalendarDays size={24} />, 
+    {
+      label: "Monthly Progress",
+      value: counts?.monthly || 0,
+      icon: <CalendarDays size={24} />,
       color: "bg-indigo-50 text-indigo-500",
       badge: "This Month"
     },
-    { 
-      label: "Total Registrations", 
-      value: counts?.total || 0, 
-      icon: <TrendingUp size={24} />, 
+    {
+      label: "Total Registrations",
+      value: counts?.total || 0,
+      icon: <TrendingUp size={24} />,
       color: "bg-emerald-50 text-emerald-500",
       badge: "Overall"
     },
@@ -89,31 +89,33 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 max-w-7xl mx-auto px-4 pb-20">
-      
+
       {/* HEADER SECTION - NO NAME, ONLY ID & ACTIVE DOT */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-10">
         <div className="flex items-center gap-6">
           {/* Tech Chip Icon */}
-          <div className="w-16 h-16 bg-gray-900 rounded-[1.5rem] flex items-center justify-center text-blue-500 shadow-2xl border border-gray-800 transition-transform hover:scale-105">
-            <Cpu size={30} />
-          </div>
-          
+          <img 
+            src="/DUA E KHAIR Logo.png" 
+            alt="Dua-E-Khair Foundation Logo" 
+            className="w-16 h-16 rounded-[1.5rem] object-contain shadow-2xl transition-transform hover:scale-105"
+          />
+
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">
                 ID: <span className="text-blue-600 tracking-widest">{user?.employeeId || 'NIDAR-NODE'}</span>
               </h1>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {/* Green Dot Indicator */}
               <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
                 <span className="text-[10px] uppercase font-black text-emerald-600 tracking-widest">Active</span>
               </div>
-              
+
               <span className="text-gray-200">|</span>
-              
+
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Node: <span className="text-gray-900">Operational</span>
               </p>
@@ -166,43 +168,43 @@ const Dashboard: React.FC = () => {
               </h2>
             </div>
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-2">
-               <table className="w-full text-left">
-                 <thead>
-                   <tr className="border-b border-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                     <th className="px-6 py-5">Node Entry</th>
-                     <th className="px-6 py-5">Serial Hash</th>
-                     <th className="px-6 py-5 text-right">Action</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-gray-50">
-                   {recentPatients.map(p => (
-                     <tr key={p.id} className="group hover:bg-gray-50/50 transition-colors">
-                       <td className="px-6 py-5 font-bold text-gray-800 uppercase text-sm">{p.name}</td>
-                       <td className="px-6 py-5 text-xs font-black text-blue-600 tracking-tighter">{p.memberIdNo || 'ID-PENDING'}</td>
-                       <td className="px-6 py-5 text-right">
-                         <Link to={`/customers/view/${p.id}`} className="inline-flex p-2 bg-gray-50 rounded-xl text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                           <ChevronRight size={18} />
-                         </Link>
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <th className="px-6 py-5">Node Entry</th>
+                    <th className="px-6 py-5">Serial Hash</th>
+                    <th className="px-6 py-5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {recentPatients.map(p => (
+                    <tr key={p.id} className="group hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-5 font-bold text-gray-800 uppercase text-sm">{p.name}</td>
+                      <td className="px-6 py-5 text-xs font-black text-blue-600 tracking-tighter">{p.memberIdNo || 'ID-PENDING'}</td>
+                      <td className="px-6 py-5 text-right">
+                        <Link to={`/customers/view/${p.id}`} className="inline-flex p-2 bg-gray-50 rounded-xl text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                          <ChevronRight size={18} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         ) : (
           <div className="lg:col-span-8 space-y-6">
-             <div className="bg-gray-900 rounded-[3rem] p-12 text-white shadow-2xl flex flex-col justify-center gap-6 relative overflow-hidden group">
-                <ShieldCheck size={140} className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-110 transition-transform duration-700" />
-                <Activity size={48} className="text-blue-500" />
-                <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">Field Terminal <br/>Operational</h2>
-                <p className="font-bold text-gray-400 text-lg max-w-md leading-relaxed italic">
-                   "Operational registry visibility restricted. Node access granted for decentralized data entry and survey synchronization only."
-                </p>
-                <Link to="/customers/create" className="inline-flex items-center gap-3 bg-blue-600 text-white w-fit px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                  <PlusCircle size={18} /> New Patient Entry
-                </Link>
-             </div>
+            <div className="bg-gray-900 rounded-[3rem] p-12 text-white shadow-2xl flex flex-col justify-center gap-6 relative overflow-hidden group">
+              <ShieldCheck size={140} className="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-110 transition-transform duration-700" />
+              <Activity size={48} className="text-blue-500" />
+              <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">Field Terminal <br />Operational</h2>
+              <p className="font-bold text-gray-400 text-lg max-w-md leading-relaxed italic">
+                "Operational registry visibility restricted. Node access granted for decentralized data entry and survey synchronization only."
+              </p>
+              <Link to="/customers/create" className="inline-flex items-center gap-3 bg-blue-600 text-white w-fit px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                <PlusCircle size={18} /> New Patient Entry
+              </Link>
+            </div>
           </div>
         )}
 
