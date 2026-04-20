@@ -64,7 +64,7 @@ const Layout: React.FC = () => {
               <img 
                 src="/DUA E KHAIR Logo.png" 
                 alt="Logo" 
-                className="w-8 h-8 rounded-lg object-contain"
+                className="w-12 h-12 rounded-lg object-contain"
               />
               <span className="font-black text-xl tracking-tight text-gray-900 leading-tight">Dua-E-Khair Foundation</span>
             </div>

@@ -8,6 +8,7 @@ import {
   Download, Smartphone, User, Upload, Users, Clock, Camera, Users2, Stethoscope,
   Info, UserCircle, CreditCard, HeartPulse, MapPin, Save, QrCode, X, Maximize2,
   BookOpen, Briefcase, CalendarCheck, ShieldCheck, Fingerprint, Droplet,
+  Share2,
 } from "lucide-react";
 
 // Camera Modal Component
@@ -18,49 +19,49 @@ const CameraModal: React.FC<{
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = (event) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-      // detect orientation
-      if (img.height > img.width) {
-        // vertical image
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-      } else {
-        // rotate 90deg if needed
-        canvas.width = img.height;
-        canvas.height = img.width;
-        ctx?.rotate(90 * Math.PI / 180);
-        ctx?.drawImage(img, 0, -img.height);
-      }
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const fixedFile = new File(
-            [blob],
-            `capture_${Date.now()}.jpg`,
-            { type: "image/jpeg" }
-          );
-          onCapture(fixedFile);
-          onClose();
+        // detect orientation
+        if (img.height > img.width) {
+          // vertical image
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+        } else {
+          // rotate 90deg if needed
+          canvas.width = img.height;
+          canvas.height = img.width;
+          ctx?.rotate(90 * Math.PI / 180);
+          ctx?.drawImage(img, 0, -img.height);
         }
-      }, "image/jpeg", 0.95);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const fixedFile = new File(
+              [blob],
+              `capture_${Date.now()}.jpg`,
+              { type: "image/jpeg" }
+            );
+            onCapture(fixedFile);
+            onClose();
+          }
+        }, "image/jpeg", 0.95);
+      };
+
+      img.src = event.target?.result as string;
     };
 
-    img.src = event.target?.result as string;
+    reader.readAsDataURL(file);
   };
-
-  reader.readAsDataURL(file);
-};
 
 
   const handleOpenCamera = () => {
@@ -192,8 +193,8 @@ const CustomerList: React.FC = () => {
       const results = Array.isArray(response.data)
         ? response.data
         : response.data
-        ? [response.data]
-        : [];
+          ? [response.data]
+          : [];
       setCustomers(results);
     } catch (err) {
       console.error("Search node error:", err);
@@ -354,6 +355,8 @@ const CustomerForm: React.FC = () => {
     regularMedicine: false,
     noOfpatient: "0",
     cardValidityUpto: "",
+    latitude: "",
+    longitude: "",
   });
 
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -826,6 +829,58 @@ const CustomerForm: React.FC = () => {
                 className={`${inputClass} h-24 pt-3 resize-none`}
                 placeholder="Detailed Address"
               />
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if ("geolocation" in navigator) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            latitude: position.coords.latitude.toString(),
+                            longitude: position.coords.longitude.toString(),
+                          }));
+                          alert("Location fetched successfully!");
+                        },
+                        (error) => {
+                          console.error("Error fetching location", error);
+                          alert("Unable to retrieve location.");
+                        }
+                      );
+                    } else {
+                      alert("Geolocation is not supported by your browser.");
+                    }
+                  }}
+                  className="w-full md:w-auto px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-100 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm border border-blue-200"
+                >
+                  <MapPin size={16} /> Get Location
+                </button>
+                {(formData.latitude || formData.longitude) && (
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between text-xs animate-in fade-in duration-300">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="text-emerald-500" size={14} />
+                      <span className="font-bold text-emerald-700">Location Saved:</span>
+                      <span className="text-emerald-600 font-medium">
+                        {formData.latitude}, {formData.longitude}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          latitude: "",
+                          longitude: "",
+                        }))
+                      }
+                      className="text-emerald-600 hover:text-emerald-800 p-1"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -1291,6 +1346,42 @@ const CustomerDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
+  const handleShare = async () => {
+    if (!c) return;
+    setSharing(true);
+    try {
+      const shareId = c.memberIdNo || c.id;
+      let shareText = "";
+      
+      const resp = await api.get(`/form/share/${shareId}`);
+      if (typeof resp.data === 'string') {
+          shareText = resp.data;
+      } else if (resp.data.message) {
+          shareText = resp.data.message;
+      } else if (resp.data.text) {
+          shareText = resp.data.text;
+      } else {
+          shareText = JSON.stringify(resp.data);
+      }
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `Patient Data - ${c.name}`,
+          text: shareText,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert("Patient data copied / ready to share");
+      }
+    } catch (err) {
+      console.error("Share failed", err);
+      alert("Failed to fetch share data.");
+    } finally {
+      setSharing(false);
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -1407,6 +1498,15 @@ const CustomerDetail: React.FC = () => {
         </div>
 
         <div className="flex gap-3">
+          <button
+            onClick={handleShare}
+            disabled={sharing}
+            title="Share basic patient details with lab or partner"
+            className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-emerald-700 shadow-md active:scale-95 disabled:opacity-50 transition-all"
+          >
+            {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
+            <span className="hidden lg:inline">Share Data</span>
+          </button>
           <button
             onClick={downloadIdCard}
             disabled={downloading}
@@ -1547,11 +1647,10 @@ const CustomerDetail: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
               <div
-                className={`p-6 rounded-2xl border text-center ${
-                  c.bloodGroup
+                className={`p-6 rounded-2xl border text-center ${c.bloodGroup
                     ? "bg-red-50 border-red-100 text-red-700 shadow-inner"
                     : "bg-gray-50 border-gray-100 text-gray-300"
-                }`}
+                  }`}
               >
                 <p className="text-[9px] font-bold uppercase mb-2 tracking-widest">
                   Blood Group
@@ -1561,11 +1660,10 @@ const CustomerDetail: React.FC = () => {
               </div>
 
               <div
-                className={`p-6 rounded-2xl border text-center ${
-                  c.bloodTestRequired
+                className={`p-6 rounded-2xl border text-center ${c.bloodTestRequired
                     ? "bg-red-50 border-red-100 text-red-700 shadow-inner"
                     : "bg-gray-50 border-gray-100 text-gray-300"
-                }`}
+                  }`}
               >
                 <p className="text-[9px] font-bold uppercase mb-2 tracking-widest">
                   Blood Test
@@ -1576,11 +1674,10 @@ const CustomerDetail: React.FC = () => {
               </div>
 
               <div
-                className={`p-6 rounded-2xl border text-center ${
-                  c.regularMedicine
+                className={`p-6 rounded-2xl border text-center ${c.regularMedicine
                     ? "bg-indigo-50 border-indigo-100 text-indigo-700 shadow-inner"
                     : "bg-gray-50 border-gray-100 text-gray-300"
-                }`}
+                  }`}
               >
                 <p className="text-[9px] font-bold uppercase mb-2 tracking-widest">
                   Medication

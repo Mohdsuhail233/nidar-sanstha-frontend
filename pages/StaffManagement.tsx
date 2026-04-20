@@ -12,6 +12,7 @@ import {
   Phone,
   Briefcase,
   Download,
+  Power,
   User,
   ShieldCheck,
   Trash2,
@@ -31,7 +32,8 @@ import {
   UserCircle,
   Maximize2,
   Smartphone,
-  FileText
+  FileText,
+  ChevronDown
 } from 'lucide-react';
 
 // ==========================================
@@ -170,7 +172,9 @@ const StaffList: React.FC = () => {
     try {
       const response = await api.get('/staff/all');
       setStaff(response.data);
-    } catch (err) { console.error("Error fetching staff:", err); }
+    } catch (err) {
+      console.error("Error fetching staff:", err);
+    }
     finally { setLoading(false); }
   };
 
@@ -278,7 +282,9 @@ const StaffForm: React.FC = () => {
           if (response.data) {
             setFormData({ ...response.data, familyMembers: response.data.familyMembers || [] });
           }
-        } catch (err) { navigate('/staff/list'); }
+        } catch (err) {
+          navigate('/staff/list');
+        }
         finally { setFetching(false); }
       };
       fetchStaffData();
@@ -499,6 +505,30 @@ const StaffDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = s?.status === 'ACTIVE';
+
+  const handleToggleStatus = async () => {
+    if (!s || !id) return;
+    const action = isActive ? 'disable' : 'enable';
+    const confirmMessage = isActive 
+      ? 'Are you sure you want to revoke access for this user?' 
+      : 'Do you want to restore access for this user?';
+    const confirmed = window.confirm(confirmMessage);
+    if (!confirmed) return;
+    setStatusLoading(true);
+    try {
+      await api.put(`/staff/${action}/${id}`);
+      setS(prev => prev ? { ...prev, status: isActive ? 'DISABLED' : 'ACTIVE' } : prev);
+    } catch (err: any) {
+      alert(`Failed to ${action} user: ${err?.response?.data?.message || err.message}`);
+    } finally {
+      setStatusLoading(false);
+      setMenuOpen(false);
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -547,6 +577,13 @@ const StaffDetail: React.FC = () => {
             <div className="flex flex-wrap gap-3 mt-2">
                <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-100 tracking-wider">ID: {s.employeeId}</span>
                <span className="text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-100 tracking-wider">Role: {s.role}</span>
+               {s.status && (
+                 <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border tracking-wider ${
+                   s.status === 'ACTIVE'
+                     ? 'text-green-600 bg-green-50 border-green-100'
+                     : 'text-red-600 bg-red-50 border-red-100'
+                 }`}>{s.status}</span>
+               )}
             </div>
           </div>
         </div>
@@ -555,6 +592,39 @@ const StaffDetail: React.FC = () => {
             {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />} ID Card
           </button>
           <Link to={`/staff/edit/${s.id}`} className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all shadow-md active:scale-95"><Edit3 size={20} /></Link>
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-700 shadow-md active:scale-95 transition-all"
+            >
+              Manage Access <ChevronDown size={18} className={`transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {menuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setMenuOpen(false)} 
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2">
+                  <button
+                    onClick={handleToggleStatus}
+                    disabled={statusLoading}
+                    className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    {statusLoading ? (
+                      <Loader2 size={16} className="animate-spin text-blue-600" />
+                    ) : (
+                      <Power size={16} className={isActive ? 'text-red-500' : 'text-green-500'} />
+                    )}
+                    <span className={`font-bold text-sm ${isActive ? 'text-red-600' : 'text-green-600'}`}>
+                      {isActive ? 'Disable User' : 'Activate User'}
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

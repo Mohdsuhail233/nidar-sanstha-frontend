@@ -28,7 +28,7 @@ export const useAuth = () => {
 // when the component is passed as a prop value (e.g., in Route's element prop).
 const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode, allowedRoles: Role[] }) => {
   const { user } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -72,7 +72,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/access-denied" element={<AccessDenied />} />
-          
+
           <Route path="/" element={<Layout />}>
             {/* Dashboard Routes */}
             <Route path="dashboard/super-admin" element={
@@ -114,7 +114,7 @@ const App: React.FC = () => {
 
             <Route index element={<Navigate to={getDashboardPath()} replace />} />
           </Route>
-          
+
           {/* Catch-all for root level if Layout fails */}
           <Route path="*" element={<Navigate to={getDashboardPath()} replace />} />
         </Routes>

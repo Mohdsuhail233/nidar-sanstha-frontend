@@ -60,6 +60,9 @@ export interface Customer {
   onlinePaymentQrUrl?: string;
   paymentScreenshotUrl?: string;
   
+  latitude?: string;
+  longitude?: string;
+  
   joiningDate: string;
   cardValidityUpto: string;
   noOfpatient?: string;
@@ -93,6 +96,7 @@ export interface Staff {
   aadharBackSideUrl?: string;
   idCardPdfUrl?: string;
   
+  status?: string;
   familyMembers: FamilyMember[];
 }
 
