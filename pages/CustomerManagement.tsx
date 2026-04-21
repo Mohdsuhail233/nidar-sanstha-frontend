@@ -1416,23 +1416,19 @@ const CustomerDetail: React.FC = () => {
           shareText = JSON.stringify(resp.data);
         }
       } catch (apiErr) {
-        // API failed (500 etc.) — build share text from local customer data
+        // API failed — build share text matching backend format
         console.warn("Share API failed, using local data fallback:", apiErr);
-        shareText = [
-          `📋 *DUA-E-KHAIR FOUNDATION*`,
-          `━━━━━━━━━━━━━━━━━━━━`,
-          `👤 Name: ${c.name || 'N/A'}`,
-          `📱 Mobile: ${c.mobile || 'N/A'}`,
-          `🆔 Member ID: ${c.memberIdNo || 'N/A'}`,
-          `💼 Profession: ${c.profession || 'N/A'}`,
-          `🎂 DOB: ${c.dateOfBirth || 'N/A'}`,
-          `📍 Address: ${c.address || 'N/A'}`,
-          `📅 Valid Upto: ${c.cardValidityUpto || 'N/A'}`,
-          `━━━━━━━━━━━━━━━━━━━━`,
-          `🩸 Blood Group: ${c.bloodGroup || 'N/A'}`,
-          `💊 Medicine: ${c.medicineName || 'None'}`,
-          `👨‍👩‍👧‍👦 Family Members: ${c.familyMembers?.length || 0}`,
-        ].join('\n');
+        let locationLink = " ";
+        if (c.latitude && c.longitude) {
+          locationLink = `https://maps.google.com/?q=${c.latitude},${c.longitude}`;
+        }
+        shareText = `Dua-E-Khair Foundation \n\n` +
+          `Name: ${c.name || ''}\n` +
+          `Mobile: ${c.mobile || ''}\n` +
+          `Profession: ${c.profession || ''}\n` +
+          `DOB: ${c.dateOfBirth || ''}\n` +
+          `Address: ${c.address || ''}\n\n` +
+          `📍 Location: ${locationLink}`;
       }
 
       if (navigator.share) {

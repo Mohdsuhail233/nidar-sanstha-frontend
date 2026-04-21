@@ -10,6 +10,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isNetworkError, setIsNetworkError] = useState(false);
+  const [isAccountDisabled, setIsAccountDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Forgot password states
@@ -27,6 +28,7 @@ const Login: React.FC = () => {
   setIsLoading(true);
   setError('');
   setIsNetworkError(false);
+  setIsAccountDisabled(false);
   // Clear any stale token from previous sessions
   localStorage.removeItem('token');
 
@@ -54,7 +56,15 @@ const Login: React.FC = () => {
       setIsNetworkError(true);
       setError(err.message);
     } else {
-      setError(err.response?.data?.message || 'Invalid Credentials');
+      const status = err.response?.status;
+      const msg = (err.response?.data?.message || '').toLowerCase();
+      // Detect disabled/suspended account from 403 or error message keywords
+      if (status === 403 || msg.includes('disabled') || msg.includes('suspended') || msg.includes('blocked') || msg.includes('deactivated')) {
+        setIsAccountDisabled(true);
+        setError(err.response?.data?.message || 'Your account has been suspended by the administrator.');
+      } else {
+        setError(err.response?.data?.message || 'Invalid Credentials');
+      }
     }
   } finally {
     setIsLoading(false);
@@ -128,8 +138,25 @@ const Login: React.FC = () => {
         {!isForgotPassword ? (
         <form onSubmit={handleSubmit} className="p-10 pt-2 space-y-6">
 
+          {/* Account Suspended Banner */}
+          {isAccountDisabled && error && (
+            <div className="p-5 rounded-2xl border-2 border-orange-200 bg-orange-50 animate-in shake duration-300">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ShieldAlert size={20} className="text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-orange-800 uppercase tracking-wide">Account Suspended</p>
+                  <p className="text-[10px] font-bold text-orange-600 mt-0.5">Access has been revoked</p>
+                </div>
+              </div>
+              <p className="text-xs font-bold text-orange-700 bg-orange-100/50 p-3 rounded-xl mt-2">{error}</p>
+              <p className="text-[9px] text-orange-500 font-medium mt-2">Please contact your administrator to restore access.</p>
+            </div>
+          )}
+
           {/* Error Box */}
-          {error && (
+          {error && !isAccountDisabled && (
             <div
               className={`p-4 rounded-2xl border animate-in shake duration-300 ${
                 isNetworkError
@@ -252,13 +279,16 @@ const Login: React.FC = () => {
 
             {forgotStep === 1 && (
               <div className="space-y-4">
-                <p className="text-xs text-gray-500 font-medium">Enter your registered email.</p>
+                <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-xs text-blue-700 font-bold">Enter the email address that was registered by your admin during account creation.</p>
+                </div>
                 <div className="group">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Registered Email</label>
                   <div className="relative">
                     <Mail size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
-                    <input type="email" required placeholder="you@example.com" className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+                    <input type="email" required placeholder="admin-registered@email.com" className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
                   </div>
+                  <p className="text-[9px] text-gray-400 font-medium mt-2 ml-1">⚠️ Only the email linked to your staff account will work.</p>
                 </div>
                 <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-[1.5rem] shadow-2xl flex items-center justify-center gap-3">
                   {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Send OTP'}
