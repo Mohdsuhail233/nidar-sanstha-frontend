@@ -269,12 +269,68 @@ const isImageValue = (val: any): boolean => {
   return false;
 };
 
-// Helper: Convert filename to full URL if it's not already a URL
+// Helper: Convert filename to full backend URL
 const getImageUrl = (val: string): string => {
   const str = val.trim();
   if (str.startsWith('http://') || str.startsWith('https://')) return str;
-  // Construct URL using API base - backend serves uploaded files
   return `https://nidarsanstha.xyz/uploads/${str}`;
+};
+
+// AuthImage: Fetches image with Authorization header to bypass ORB blocking.
+// The backend requires a Bearer token to serve uploaded files, so a plain
+// <img src="..."> fails. This component fetches via axios (token is auto-attached
+// by the interceptor), converts the response to a Blob URL, and renders it.
+const AuthImage: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+}> = ({ src, alt, className, onClick }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    setError(false);
+    setBlobUrl(null);
+
+    api.get(src, { responseType: 'blob' })
+      .then(res => {
+        objectUrl = URL.createObjectURL(res.data);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setError(true));
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm py-4">
+        <ImageIcon size={16} className="text-gray-400" />
+        {alt}
+      </div>
+    );
+  }
+
+  if (!blobUrl) {
+    return (
+      <div className="w-full h-40 bg-gray-100 rounded-xl flex items-center justify-center animate-pulse">
+        <Loader2 size={24} className="text-gray-300 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={blobUrl}
+      alt={alt}
+      className={className}
+      onClick={onClick}
+    />
+  );
 };
 
 const SurveyResults: React.FC = () => {
@@ -310,7 +366,7 @@ const SurveyResults: React.FC = () => {
             >
               ✕ Close
             </button>
-            <img
+            <AuthImage
               src={previewUrl}
               alt="Preview"
               className="w-full h-full object-contain rounded-3xl shadow-2xl"
@@ -355,24 +411,12 @@ const SurveyResults: React.FC = () => {
                           className="mt-2 cursor-pointer group relative"
                           onClick={() => setPreviewUrl(getImageUrl(String(val)))}
                         >
-                          <img
+                          <AuthImage
                             src={getImageUrl(String(val))}
                             alt={key}
                             className="w-full h-40 object-cover rounded-xl border-2 border-white shadow-md group-hover:scale-[1.02] transition-transform"
-                            onError={(e) => {
-                              // If image fails to load, show filename as fallback
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
                           />
-                          <div className="hidden text-base font-bold text-gray-800 break-words">
-                            <div className="flex items-center gap-2">
-                              <ImageIcon size={16} className="text-gray-400" />
-                              {String(val)}
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center transition-opacity">
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center transition-opacity pointer-events-none">
                             <Eye size={24} className="text-white" />
                           </div>
                         </div>

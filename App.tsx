@@ -9,6 +9,7 @@ import StaffManagement from './pages/StaffManagement';
 import SurveyModule from './pages/SurveyModule';
 import AccessDenied from './pages/AccessDenied';
 import Layout from './components/Layout';
+import VerificationPage from './pages/VerificationPage';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -72,6 +73,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/access-denied" element={<AccessDenied />} />
+          <Route path="/form/verify/:id" element={<VerificationPage />} />
 
           <Route path="/" element={<Layout />}>
             {/* Dashboard Routes */}
