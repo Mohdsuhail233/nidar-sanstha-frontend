@@ -242,7 +242,8 @@ const CustomerList: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
+        {/* Desktop Table View */}
+        <table className="w-full text-left hidden md:table">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest">
               <th className="px-6 py-4">Patient Profile</th>
@@ -322,6 +323,53 @@ const CustomerList: React.FC = () => {
             )}
           </tbody>
         </table>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden">
+          {loading ? (
+            <div className="py-20 text-center">
+              <Loader2 className="animate-spin mx-auto text-blue-500" size={32} />
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="py-20 text-center text-gray-400 font-medium">
+              No records found.
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {customers.map((c) => (
+                <Link
+                  key={c.id}
+                  to={`/customers/view/${c.id}`}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-blue-50 transition-colors"
+                >
+                  <div className="w-11 h-11 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
+                    {c.patientPhotoUrl ? (
+                      <img src={c.patientPhotoUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={20} className="m-auto mt-2.5 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 capitalize text-sm truncate">{c.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-blue-600 font-bold uppercase">
+                        {c.gender} {c.bloodGroup ? `| ${c.bloodGroup}` : ""}
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                        {c.memberIdNo || "ID_PENDING"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-sm font-semibold text-gray-700">{c.mobile}</p>
+                  </div>
+                  <ChevronLeft size={16} className="text-gray-300 rotate-180 flex-shrink-0" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1354,16 +1402,37 @@ const CustomerDetail: React.FC = () => {
     try {
       const shareId = c.memberIdNo || c.id;
       let shareText = "";
-      
-      const resp = await api.get(`/form/share/${shareId}`);
-      if (typeof resp.data === 'string') {
+
+      // Try API first, fallback to local data if it fails
+      try {
+        const resp = await api.get(`/share/${shareId}`);
+        if (typeof resp.data === 'string') {
           shareText = resp.data;
-      } else if (resp.data.message) {
+        } else if (resp.data.message) {
           shareText = resp.data.message;
-      } else if (resp.data.text) {
+        } else if (resp.data.text) {
           shareText = resp.data.text;
-      } else {
+        } else {
           shareText = JSON.stringify(resp.data);
+        }
+      } catch (apiErr) {
+        // API failed (500 etc.) — build share text from local customer data
+        console.warn("Share API failed, using local data fallback:", apiErr);
+        shareText = [
+          `📋 *DUA-E-KHAIR FOUNDATION*`,
+          `━━━━━━━━━━━━━━━━━━━━`,
+          `👤 Name: ${c.name || 'N/A'}`,
+          `📱 Mobile: ${c.mobile || 'N/A'}`,
+          `🆔 Member ID: ${c.memberIdNo || 'N/A'}`,
+          `💼 Profession: ${c.profession || 'N/A'}`,
+          `🎂 DOB: ${c.dateOfBirth || 'N/A'}`,
+          `📍 Address: ${c.address || 'N/A'}`,
+          `📅 Valid Upto: ${c.cardValidityUpto || 'N/A'}`,
+          `━━━━━━━━━━━━━━━━━━━━`,
+          `🩸 Blood Group: ${c.bloodGroup || 'N/A'}`,
+          `💊 Medicine: ${c.medicineName || 'None'}`,
+          `👨‍👩‍👧‍👦 Family Members: ${c.familyMembers?.length || 0}`,
+        ].join('\n');
       }
 
       if (navigator.share) {
@@ -1373,11 +1442,13 @@ const CustomerDetail: React.FC = () => {
         });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert("Patient data copied / ready to share");
+        alert("Patient data copied to clipboard!");
       }
-    } catch (err) {
+    } catch (err: any) {
+      // User cancelled the share dialog — not an error
+      if (err?.name === 'AbortError') return;
       console.error("Share failed", err);
-      alert("Failed to fetch share data.");
+      alert("Share failed. Please try again.");
     } finally {
       setSharing(false);
     }
@@ -1598,6 +1669,42 @@ const CustomerDetail: React.FC = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Location Preview */}
+              {c.latitude && c.longitude && (
+                <div
+                  className="rounded-2xl overflow-hidden border border-blue-100 shadow-sm cursor-pointer group hover:shadow-md transition-all"
+                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`, '_blank')}
+                >
+                  <div className="relative h-36 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={`https://maps.googleapis.com/maps/api/staticmap?center=${c.latitude},${c.longitude}&zoom=15&size=400x200&markers=color:red%7C${c.latitude},${c.longitude}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`}
+                      alt="Location Map"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // If Google Maps static image fails, show fallback
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                        <MapPin size={14} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Open in Maps</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">GPS Location</span>
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400 font-mono">
+                      {parseFloat(c.latitude).toFixed(4)}, {parseFloat(c.longitude).toFixed(4)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

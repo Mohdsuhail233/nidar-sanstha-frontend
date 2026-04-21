@@ -73,7 +73,7 @@ const Login: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        await api.post('/auth/forgot-password', { email: forgotEmail });
+        await api.post('/auth/forgot-password', null, { params: { email: forgotEmail } });
         setForgotStep(2);
       } else if (forgotStep === 2) {
         if (!forgotOtp) {
@@ -81,7 +81,7 @@ const Login: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        await api.post('/auth/verify-otp', { email: forgotEmail, otp: forgotOtp });
+        await api.post('/auth/verify-otp', null, { params: { email: forgotEmail, otp: forgotOtp } });
         setForgotStep(3);
       } else if (forgotStep === 3) {
         if (!newPassword || newPassword.length < 6) {
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
           return;
         }
         // Sometimes reset-password needs the newly generated token or just uses the recent verified state. Assuming standard params.
-        await api.post('/auth/reset-password', { email: forgotEmail, newPassword: newPassword });
+        await api.post('/auth/reset-password', null, { params: { email: forgotEmail, newPassword: newPassword } });
         alert('Password Changed Successfully! Please login.');
         setIsForgotPassword(false);
         setForgotStep(1);
