@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Role, UserSession } from './types';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -69,7 +69,7 @@ const App: React.FC = () => {
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/access-denied" element={<AccessDenied />} />
@@ -120,7 +120,7 @@ const App: React.FC = () => {
           {/* Catch-all for root level if Layout fails */}
           <Route path="*" element={<Navigate to={getDashboardPath()} replace />} />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </AuthContext.Provider>
   );
 };

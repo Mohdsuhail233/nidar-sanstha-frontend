@@ -38,8 +38,8 @@ api.interceptors.response.use(
     // Agar token expire ho gaya ya galat hai (401 ya 403)
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('token'); // Purana token saaf karo
-      if (!window.location.hash.includes('/login')) {
-        window.location.hash = '#/login';
+      if (!window.location.pathname.includes('/login')) {
+        window.location.pathname = '/login';
       }
     }
     return Promise.reject(error);
