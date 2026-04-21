@@ -56,7 +56,10 @@ const VerificationPage: React.FC = () => {
   }, [data, mapOpened]);
 
   const openGoogleMaps = () => {
-    if (data?.latitude && data?.longitude) {
+    // Use mapUrl from backend if available, otherwise build from coordinates
+    if (data?.mapUrl) {
+      window.open(data.mapUrl, '_blank');
+    } else if (data?.latitude && data?.longitude) {
       const url = `https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`;
       window.open(url, '_blank');
     }
@@ -88,13 +91,13 @@ const VerificationPage: React.FC = () => {
     );
   }
 
-  // Determine if active
-  const statusStr = (data.status || 'ACTIVE').toUpperCase();
+  // Determine if active — .trim() needed because backend sends "ACTIVE " with trailing space
+  const statusStr = (data.status || 'ACTIVE').trim().toUpperCase();
   const isActive = statusStr === 'ACTIVE' || statusStr === 'VALID';
 
-  // Fallbacks for display
+  // Fallbacks for display — backend sends `memberIdNo`, not `memberId`
   const displayName = data.name || data.customerName || data.fullName || 'N/A';
-  const displayId = data.memberId || data.id || 'N/A';
+  const displayId = data.memberIdNo || data.memberId || data.id || 'N/A';
   const displayDate = data.validUpto || data.validity || data.expiryDate || 'N/A';
 
   return (
