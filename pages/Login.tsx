@@ -109,7 +109,22 @@ const Login: React.FC = () => {
         setNewPassword('');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred. Please try again.');
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || '';
+      if (forgotStep === 1) {
+        // Email not found or server error on forgot-password
+        if (status === 404 || status === 400 || msg.toLowerCase().includes('not found')) {
+          setError('This email is not registered. Please enter the email provided by your admin.');
+        } else if (status === 500) {
+          setError('Email not registered or email service is unavailable. Please contact your administrator.');
+        } else {
+          setError(msg || 'Failed to send OTP. Please try again.');
+        }
+      } else if (forgotStep === 2) {
+        setError(msg || 'Invalid OTP. Please check and try again.');
+      } else {
+        setError(msg || 'Password reset failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -300,10 +315,10 @@ const Login: React.FC = () => {
               <div className="space-y-4">
                 <p className="text-xs text-blue-600 font-medium bg-blue-50 p-3 rounded-xl border border-blue-100">OTP sent to {forgotEmail}.</p>
                 <div className="group">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Enter 4-Digit OTP</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Enter 6-Digit OTP</label>
                   <div className="relative">
                     <Key size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
-                    <input type="text" required maxLength={4} placeholder="1234" className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold" value={forgotOtp} onChange={(e) => setForgotOtp(e.target.value)} />
+                    <input type="text" required maxLength={6} placeholder="123456" className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold tracking-[0.3em] text-center text-lg" value={forgotOtp} onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
                 <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-[1.5rem] flex items-center justify-center gap-3">
