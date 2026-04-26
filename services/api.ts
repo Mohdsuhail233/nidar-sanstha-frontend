@@ -25,7 +25,37 @@ api.interceptors.request.use(
 
 // --- RESPONSE INTERCEPTOR: Error handle karne ke liye ---
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Recursively rewrite Oracle URLs to proxy URLs in response data
+    const rewriteUrls = (obj: any): any => {
+      if (!obj) return obj;
+      if (typeof obj === 'string') {
+        // Handle full Oracle URLs
+        if (obj.includes('oraclecloud.com') && obj.startsWith('http')) {
+          return `${API_BASE_URL}/api/files/view?path=${encodeURIComponent(obj)}`;
+        }
+        // Handle relative proxy paths by adding the Base URL
+        if (obj.startsWith('/api/files/view')) {
+          return `${API_BASE_URL}${obj}`;
+        }
+        return obj;
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(rewriteUrls);
+      }
+      if (typeof obj === 'object') {
+        const newObj: any = {};
+        for (const key in obj) {
+          newObj[key] = rewriteUrls(obj[key]);
+        }
+        return newObj;
+      }
+      return obj;
+    };
+    
+    response.data = rewriteUrls(response.data);
+    return response;
+  },
   (error) => {
     if (!error.response) {
       console.error("CRITICAL: Backend server at " + API_BASE_URL + " is unreachable.");
@@ -45,5 +75,19 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const getFileUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  const str = url.trim();
+  if (str.startsWith('http://') || str.startsWith('https://')) {
+    // If it's an Oracle URL, convert it to our proxy URL
+    if (str.includes('oraclecloud.com')) {
+      return `${API_BASE_URL}/api/files/view?path=${encodeURIComponent(str)}`;
+    }
+    return str;
+  }
+  // For relative paths or filenames
+  return `${API_BASE_URL}/api/files/view?path=${encodeURIComponent(str)}`;
+};
 
 export default api;

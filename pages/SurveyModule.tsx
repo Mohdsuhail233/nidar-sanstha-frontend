@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useParams, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getFileUrl } from '../services/api';
 import { useAuth } from '../App';
 import {
   ClipboardList, Send, Eye, Clock, CheckCircle2, Loader2, ChevronLeft,
@@ -176,6 +176,7 @@ const SurveySubmit: React.FC = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState<any>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [files, setFiles] = useState<Record<string, File>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -190,6 +191,29 @@ const SurveySubmit: React.FC = () => {
     setLoading(true);
     const data = new FormData();
     data.append('data', new Blob([JSON.stringify(formData)], { type: 'application/json' }));
+
+    // Smart mapping for the 3 backend slots
+    (Object.entries(files) as [string, File][]).forEach(([label, file]) => {
+      const lower = label.toLowerCase();
+      if (lower.includes('patient')) data.append('patientPhoto', file);
+      else if (lower.includes('prescription')) data.append('prescription', file);
+      else if (lower.includes('payment') || lower.includes('ss') || lower.includes('screenshot')) data.append('paymentSs', file);
+    });
+
+    // Final fallback: if slots are still empty, fill them with any remaining files
+    const usedLabels = new Set<string>();
+    (Object.entries(files) as [string, File][]).forEach(([label]) => {
+      const lower = label.toLowerCase();
+      if (lower.includes('patient') || lower.includes('prescription') || lower.includes('payment') || lower.includes('ss') || lower.includes('screenshot')) {
+        usedLabels.add(label);
+      }
+    });
+
+    const remainingFiles = (Object.entries(files) as [string, File][]).filter(([label]) => !usedLabels.has(label));
+    if (remainingFiles.length > 0 && !data.has('patientPhoto')) data.append('patientPhoto', remainingFiles[0][1]);
+    if (remainingFiles.length > 1 && !data.has('prescription')) data.append('prescription', remainingFiles[1][1]);
+    if (remainingFiles.length > 2 && !data.has('paymentSs')) data.append('paymentSs', remainingFiles[2][1]);
+
 
     try {
       await api.post(`/survey/submit/${formId}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -228,7 +252,11 @@ const SurveySubmit: React.FC = () => {
                   <div className="text-center">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Upload Visual Asset</p>
                     <input type="file" accept="image/*" required={field.required} className="text-[10px] font-black uppercase cursor-pointer file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-full file:mr-4 file:hover:bg-blue-700" onChange={e => {
-                      setFormData({ ...formData, [headingText]: e.target.files?.[0]?.name || 'Photo_Captured' });
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFiles(prev => ({ ...prev, [headingText]: file }));
+                        setFormData(prev => ({ ...prev, [headingText]: file.name }));
+                      }
                     }} />
                   </div>
                 </div>
@@ -260,20 +288,22 @@ const SurveySubmit: React.FC = () => {
 // Helper: Check if a value is an image URL or image filename
 const isImageValue = (val: any): boolean => {
   if (typeof val !== 'string') return false;
-  const str = val.trim().toLowerCase();
-  // Check for image file extensions
-  if (/\.(png|jpg|jpeg|gif|webp|bmp|svg)(\?.*)?$/i.test(str)) return true;
-  // Check for URL patterns that are likely images
-  if ((str.startsWith('http://') || str.startsWith('https://')) &&
-    (str.includes('/images/') || str.includes('/uploads/') || str.includes('/photos/'))) return true;
-  return false;
-};
-
-// Helper: Convert filename to full backend URL
-const getImageUrl = (val: string): string => {
   const str = val.trim();
-  if (str.startsWith('http://') || str.startsWith('https://')) return str;
-  return `https://nidarsanstha.xyz/uploads/${str}`;
+  const lower = str.toLowerCase();
+  
+  // 1. Check for common image extensions
+  if (/\.(png|jpg|jpeg|gif|webp|bmp|svg|tiff)(\?.*)?$/i.test(str)) return true;
+  
+  // 2. Check for URL patterns
+  if (lower.startsWith('http://') || lower.startsWith('https://')) {
+    // Check for Oracle Object Storage or common patterns
+    if (lower.includes('objectstorage') || lower.includes('/o/') || lower.includes('/images/') || lower.includes('/uploads/')) {
+       // If it has a URL pattern and looks like a resource, try to treat as image 
+       // but extension check above is primary.
+       return true; 
+    }
+  }
+  return false;
 };
 
 // AuthImage: Fetches image with Authorization header to bypass ORB blocking.
@@ -294,7 +324,7 @@ const AuthImage: React.FC<{
     setError(false);
     setBlobUrl(null);
 
-    api.get(src, { responseType: 'blob' })
+    api.get(getFileUrl(src), { responseType: 'blob' })
       .then(res => {
         objectUrl = URL.createObjectURL(res.data);
         setBlobUrl(objectUrl);
@@ -409,10 +439,10 @@ const SurveyResults: React.FC = () => {
                       {isImageValue(val) ? (
                         <div
                           className="mt-2 cursor-pointer group relative"
-                          onClick={() => setPreviewUrl(getImageUrl(String(val)))}
+                          onClick={() => setPreviewUrl(getFileUrl(String(val)))}
                         >
                           <AuthImage
-                            src={getImageUrl(String(val))}
+                            src={getFileUrl(String(val))}
                             alt={key}
                             className="w-full h-40 object-cover rounded-xl border-2 border-white shadow-md group-hover:scale-[1.02] transition-transform"
                           />

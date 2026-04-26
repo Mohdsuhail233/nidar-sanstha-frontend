@@ -188,8 +188,8 @@ const StaffList: React.FC = () => {
     
     if (/^\d{10}$/.test(query)) {
       endpoint = `/staff/by-mobile?mobile=${query}`;
-    } else if (upperQuery.startsWith('EMP') || upperQuery.startsWith('NID') || upperQuery.startsWith('NDR') || /^\d+$/.test(query)) {
-      endpoint = `/staff/by-employee-id?id=${encodeURIComponent(query)}`;
+    } else if (upperQuery.startsWith('EMP') || upperQuery.startsWith('DKF') || /^\d+$/.test(query)) {
+      endpoint = `/staff/by-employee-id?employeeId=${encodeURIComponent(query)}`;
     } else {
       endpoint = `/staff/search?name=${encodeURIComponent(query)}`;
     }
@@ -308,8 +308,7 @@ const StaffForm: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       familyMembers: [...(prev.familyMembers || []), { 
-        name: '', gender: 'MALE', dateOfBirth: '', educationQualification: '', 
-        profession: '', relationshipWithCardHolder: '', mobile: ''
+        name: '', gender: 'MALE', phone: '', relation: ''
       } as FamilyMember]
     }));
   };
@@ -329,7 +328,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   const data = new FormData();
   const submissionData = { ...formData };
   
-  ['profileImageUrl', 'resumeUrl', 'aadharFrontSideUrl', 'aadharBackSideUrl', 'idCardPdfUrl', 'createdAt', 'familyMembers'].forEach(f => delete (submissionData as any)[f]);
+  ['profileImageUrl', 'resumeUrl', 'aadharFrontSideUrl', 'aadharBackSideUrl', 'idCardPdfUrl', 'createdAt'].forEach(f => delete (submissionData as any)[f]);
   
   data.append('staff', new Blob([JSON.stringify(submissionData)], { type: 'application/json' }));
   
@@ -476,11 +475,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <button type="button" onClick={() => removeFamilyMember(idx)} className="absolute top-4 right-4 p-2 text-red-400 hover:bg-white rounded-xl shadow-sm transition-colors"><Trash2 size={20} /></button>
                 <div><label className={labelClass}>Name</label><input value={m.name || ''} onChange={e => updateFamilyMember(idx, 'name', e.target.value)} className={inputClass} /></div>
                 <div><label className={labelClass}>Gender</label><select value={m.gender || 'MALE'} onChange={e => updateFamilyMember(idx, 'gender', e.target.value)} className={inputClass}><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option></select></div>
-                <div><label className={labelClass}>Mobile</label><input value={m.mobile || ''} maxLength={10} onChange={e => updateFamilyMember(idx, 'mobile', e.target.value)} className={inputClass} /></div>
-                <div><label className={labelClass}>Relationship</label><input value={m.relationshipWithCardHolder || ''} onChange={e => updateFamilyMember(idx, 'relationshipWithCardHolder', e.target.value)} className={inputClass} /></div>
-                <div><label className={labelClass}>DOB</label><input type="date" value={m.dateOfBirth || ''} onChange={e => updateFamilyMember(idx, 'dateOfBirth', e.target.value)} className={inputClass} /></div>
-                <div><label className={labelClass}>Education</label><input value={m.educationQualification || ''} onChange={e => updateFamilyMember(idx, 'educationQualification', e.target.value)} className={inputClass} /></div>
-                <div className="md:col-span-2"><label className={labelClass}>Profession</label><input value={m.profession || ''} onChange={e => updateFamilyMember(idx, 'profession', e.target.value)} className={inputClass} /></div>
+                <div><label className={labelClass}>Phone</label><input value={m.phone || ''} maxLength={10} onChange={e => updateFamilyMember(idx, 'phone', e.target.value)} className={inputClass} /></div>
+                <div><label className={labelClass}>Relation</label><input value={m.relation || ''} onChange={e => updateFamilyMember(idx, 'relation', e.target.value)} className={inputClass} /></div>
               </div>
             ))}
           </div>
@@ -668,13 +664,12 @@ const StaffDetail: React.FC = () => {
               <span className="px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[9px] font-black text-gray-500 uppercase tracking-widest">{s.familyMembers?.length || 0} Registered</span>
             </div>
             <div className="overflow-x-auto rounded-2xl border border-gray-50">
-                <table className="w-full text-left text-xs min-w-[700px]">
+                <table className="w-full text-left text-xs min-w-[500px]">
                   <thead className="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
                     <tr>
                       <th className="px-6 py-4">Name</th>
-                      <th className="px-6 py-4">Birth & Contact</th>
-                      <th className="px-6 py-4">Education/Work</th>
-                      <th className="px-6 py-4">Kinship</th>
+                      <th className="px-6 py-4">Phone</th>
+                      <th className="px-6 py-4">Relation</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -685,25 +680,16 @@ const StaffDetail: React.FC = () => {
                            <p className="text-[9px] text-blue-500 font-bold uppercase">{m.gender}</p>
                         </td>
                         <td className="px-6 py-4">
-                           <div className="flex flex-col gap-1">
-                              <span className="flex items-center gap-1.5 font-bold text-gray-700 text-[10px]"><Calendar size={12} className="text-gray-400" /> {m.dateOfBirth || '-'}</span>
-                              <span className="flex items-center gap-1.5 font-bold text-gray-500 text-[10px]"><Smartphone size={12} className="text-gray-400" /> {m.mobile || 'No Contact'}</span>
-                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                           <div className="flex flex-col gap-1">
-                              <span className="flex items-center gap-1.5 font-bold text-gray-700 text-[10px]"><BookOpen size={12} className="text-indigo-400" /> {m.educationQualification || 'N/A'}</span>
-                              <span className="flex items-center gap-1.5 font-bold text-gray-500 text-[10px]"><Briefcase size={12} className="text-emerald-400" /> {m.profession || 'N/A'}</span>
-                           </div>
+                           <span className="flex items-center gap-1.5 font-bold text-gray-700 text-[10px]"><Smartphone size={12} className="text-gray-400" /> {m.phone || 'No Contact'}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black uppercase text-[9px] border border-blue-100">
-                            {m.relationshipWithCardHolder || 'Kin'}
+                            {m.relation || 'Kin'}
                           </span>
                         </td>
                       </tr>
                     )) : (
-                      <tr><td colSpan={4} className="px-6 py-16 text-center text-gray-300 font-bold uppercase tracking-widest italic opacity-40">No kinship records found.</td></tr>
+                      <tr><td colSpan={3} className="px-6 py-16 text-center text-gray-300 font-bold uppercase tracking-widest italic opacity-40">No kinship records found.</td></tr>
                     )}
                   </tbody>
                 </table>

@@ -175,10 +175,15 @@ const CustomerList: React.FC = () => {
       endpoint = `/form/mobile?mobile=${query}`;
     } else if (query.includes("-") || query.includes("/")) {
       const cleanDate = query.replace(/\//g, "-");
-      endpoint = `/form/search-by-dob?dob=${cleanDate}`;
+      // Convert dd-MM-yyyy to yyyy-MM-dd for backend LocalDate
+      const parts = cleanDate.split("-");
+      let formattedDate = cleanDate;
+      if (parts.length === 3 && parts[0].length <= 2) {
+        formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+      endpoint = `/form/search-by-dob?dob=${formattedDate}`;
     } else if (
-      upperQuery.startsWith("NID") ||
-      upperQuery.startsWith("NDR") ||
+      upperQuery.startsWith("DKF") ||
       /^\d+$/.test(query)
     ) {
       endpoint = `/form/search-by-idCardNumber?idCard=${encodeURIComponent(
@@ -1050,7 +1055,7 @@ const CustomerForm: React.FC = () => {
                     className="hidden"
                     onChange={(e) =>
                       e.target.files &&
-                      Array.from(e.target.files).forEach((f) =>
+                      Array.from<File>(e.target.files).forEach((f) =>
                         handleFileCapture(f, "prescriptionPhoto")
                       )
                     }
