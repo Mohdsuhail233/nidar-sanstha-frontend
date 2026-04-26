@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useParams, Link } from "react-router-dom";
-import api from "../services/api";
+import api, { getFileUrl } from "../services/api";
 import { useAuth } from "../App";
 import { Customer, Role, FamilyMember } from "../types";
 import {
@@ -8,8 +8,47 @@ import {
   Download, Smartphone, User, Upload, Users, Clock, Camera, Users2, Stethoscope,
   Info, UserCircle, CreditCard, HeartPulse, MapPin, Save, QrCode, X, Maximize2,
   BookOpen, Briefcase, CalendarCheck, ShieldCheck, Fingerprint, Droplet,
-  Share2,
+  Share2, Image as ImageIcon
 } from "lucide-react";
+
+// --- AUTH IMAGE COMPONENT ---
+// Fetches images with Authorization header to bypass ORB blocking for proxy URLs
+const AuthImage: React.FC<{
+  src: string;
+  alt?: string;
+  className?: string;
+  onClick?: () => void;
+}> = ({ src, alt, className, onClick }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!src) return;
+    if (src.startsWith('blob:') || src.startsWith('data:')) {
+      setBlobUrl(src);
+      return;
+    }
+
+    let objectUrl: string | null = null;
+    setError(false);
+    setBlobUrl(null);
+
+    api.get(getFileUrl(src), { responseType: 'blob' })
+      .then(res => {
+        objectUrl = URL.createObjectURL(res.data);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setError(true));
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
+  if (error) return <div className={`flex items-center justify-center bg-gray-100 text-gray-400 ${className}`}><ImageIcon size={24} /></div>;
+  if (!blobUrl) return <div className={`flex items-center justify-center bg-gray-100 animate-pulse ${className}`}><Loader2 size={24} className="animate-spin text-gray-300" /></div>;
+  return <img src={blobUrl} alt={alt} className={className} onClick={onClick} />;
+};
 
 // Camera Modal Component
 const CameraModal: React.FC<{
@@ -123,14 +162,14 @@ const PhotoPreviewModal: React.FC<{
     >
       <button
         onClick={onClose}
-        className="absolute -top-12 right-0 text-white p-2"
+        className="absolute -top-12 right-0 text-white p-2 hover:bg-white/10 rounded-full transition-all"
       >
         <X size={32} />
       </button>
-      <img
+      <AuthImage
         src={url}
         alt={title}
-        className="max-h-[80vh] w-auto mx-auto rounded-2xl shadow-2xl"
+        className="max-h-[80vh] w-auto mx-auto rounded-2xl shadow-2xl border-4 border-white/5"
       />
       <p className="text-white text-center mt-4 font-bold uppercase tracking-widest text-sm">
         {title}
@@ -1486,9 +1525,10 @@ const CustomerDetail: React.FC = () => {
           ? response.data
           : response.data?.url || response.data?.data;
 
-      if (cloudUrl && cloudUrl.startsWith("http")) {
-        const fileResponse = await fetch(cloudUrl);
-        const blob = await fileResponse.blob();
+      if (cloudUrl) {
+        // Fetch via API to include Authorization token, since it might be a proxied URL
+        const fileResponse = await api.get(cloudUrl.startsWith('http') ? cloudUrl : getFileUrl(cloudUrl), { responseType: 'blob' });
+        const blob = fileResponse.data;
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -1611,7 +1651,7 @@ const CustomerDetail: React.FC = () => {
               }
             >
               {c.patientPhotoUrl ? (
-                <img
+                <AuthImage
                   src={c.patientPhotoUrl}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
@@ -1677,16 +1717,11 @@ const CustomerDetail: React.FC = () => {
                   className="rounded-2xl overflow-hidden border border-blue-100 shadow-sm cursor-pointer group hover:shadow-md transition-all"
                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`, '_blank')}
                 >
-                  <div className="relative h-36 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={`https://maps.googleapis.com/maps/api/staticmap?center=${c.latitude},${c.longitude}&zoom=15&size=400x200&markers=color:red%7C${c.latitude},${c.longitude}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`}
-                      alt="Location Map"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // If Google Maps static image fails, show fallback
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
+                  <div className="relative h-36 bg-gray-100 flex items-center justify-center overflow-hidden pointer-events-none">
+                    <iframe
+                      src={`https://www.google.com/maps?q=${c.latitude},${c.longitude}&output=embed&z=15`}
+                      title="Location Map"
+                      className="w-full h-full border-0"
                     />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all">
