@@ -29,6 +29,7 @@ api.interceptors.response.use(
     // Recursively rewrite Oracle URLs to proxy URLs in response data
     const rewriteUrls = (obj: any): any => {
       if (!obj) return obj;
+      if (obj instanceof Blob || obj instanceof ArrayBuffer) return obj;
       if (typeof obj === 'string') {
         // Handle full Oracle URLs
         if (obj.includes('oraclecloud.com') && obj.startsWith('http')) {

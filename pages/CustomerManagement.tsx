@@ -45,8 +45,8 @@ const AuthImage: React.FC<{
     };
   }, [src]);
 
-  if (error) return <div className={`flex items-center justify-center bg-gray-100 text-gray-400 ${className}`}><ImageIcon size={24} /></div>;
-  if (!blobUrl) return <div className={`flex items-center justify-center bg-gray-100 animate-pulse ${className}`}><Loader2 size={24} className="animate-spin text-gray-300" /></div>;
+  if (error) return <div className={`flex items-center justify-center bg-gray-900 text-gray-500 ${className}`} style={{ minWidth: '200px', minHeight: '200px' }}><ImageIcon size={32} /></div>;
+  if (!blobUrl) return <div className={`flex items-center justify-center bg-gray-900 animate-pulse ${className}`} style={{ minWidth: '200px', minHeight: '200px' }}><Loader2 size={32} className="animate-spin text-gray-600" /></div>;
   return <img src={blobUrl} alt={alt} className={className} onClick={onClick} />;
 };
 
@@ -1853,7 +1853,7 @@ const CustomerDetail: React.FC = () => {
                       className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white shadow-lg cursor-pointer hover:scale-105 transition-all group relative"
                       onClick={() => setPreviewUrl(url)}
                     >
-                      <img
+                      <AuthImage
                         src={url}
                         className="w-full h-full object-cover"
                         alt="prescription"
@@ -1910,7 +1910,7 @@ const CustomerDetail: React.FC = () => {
                               }
                             >
                               {m.photoUrl ? (
-                                <img
+                                <AuthImage
                                   src={m.photoUrl}
                                   className="w-full h-full object-cover"
                                   alt="family"
