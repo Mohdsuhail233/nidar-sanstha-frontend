@@ -13,7 +13,9 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     // Don't send token on login requests - stale tokens cause "Invalid Credentials"
-    if (token && !config.url?.includes('/auth/login')) {
+    // Don't send token on verify requests - public endpoint for QR scanners (no account needed)
+    const isPublicEndpoint = config.url?.includes('/auth/login') || config.url?.includes('/form/verify');
+    if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -67,9 +69,12 @@ api.interceptors.response.use(
     }
 
     // Agar token expire ho gaya ya galat hai (401 ya 403)
+    // NOTE: Verification page public hai (QR scanners ka koi account nahi hota)
+    // Isliye /form/verify path pe login redirect nahi karna
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('token'); // Purana token saaf karo
-      if (!window.location.pathname.includes('/login')) {
+      const isVerifyPage = window.location.pathname.includes('/form/verify');
+      if (!window.location.pathname.includes('/login') && !isVerifyPage) {
         window.location.pathname = '/login';
       }
     }
