@@ -1343,7 +1343,7 @@ const CustomerForm: React.FC = () => {
 
                   <div className="w-48 h-48 bg-white p-2 rounded-xl shadow-sm border border-blue-100 flex items-center justify-center overflow-hidden">
                     <img
-                      src=" GooglePay_QR.png"
+                      src="/GooglePay_QR.png"
                       alt="Payment QR"
                       className="w-full h-full object-contain"
                     />
