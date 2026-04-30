@@ -165,12 +165,12 @@ const VerificationPage: React.FC = () => {
               className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-full font-black uppercase text-[11px] tracking-widest transition-all shadow-xl shadow-blue-600/30 active:scale-[0.98]"
             >
               <MapPin className="w-5 h-5" />
-              {mapOpened ? 'Open Again In Maps' : 'Open Location in Maps'}
+              {mapOpened ? 'Open Location in Maps' : 'Open Location in Maps'}
             </button>
           ) : (
             <div className="text-center p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
               <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 flex items-center justify-center gap-2">
-                <AlertCircle className="w-4 h-4" /> No Map Data Attached
+                <AlertCircle className="w-4 h-4" /> No Map Location Attached
               </p>
             </div>
           )}
