@@ -112,11 +112,23 @@ const Login: React.FC = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message || '';
       if (forgotStep === 1) {
-        // Email not found or server error on forgot-password
-        if (status === 404 || status === 400 || msg.toLowerCase().includes('not found')) {
+        // Check if backend message indicates email not found/registered
+        const lowerMsg = msg.toLowerCase();
+        const isEmailNotFound = status === 404 || status === 400 || 
+          lowerMsg.includes('not found') || lowerMsg.includes('not registered') || lowerMsg.includes('no user') || lowerMsg.includes('does not exist');
+        
+        if (isEmailNotFound) {
           setError('This email is not registered. Please enter the email provided by your admin.');
+        } else if (status === 500 && msg) {
+          // Server returned 500 but with a message - check if it's an email issue
+          if (lowerMsg.includes('not found') || lowerMsg.includes('not registered') || lowerMsg.includes('no user') || lowerMsg.includes('does not exist') || lowerMsg.includes('email')) {
+            setError('This email is not registered. Please enter the email provided by your admin.');
+          } else {
+            setError('Email service is temporarily unavailable. Please try again later.');
+          }
         } else if (status === 500) {
-          setError('Email not registered or email service is unavailable. Please contact your administrator.');
+          // Server returned 500 with no message - likely a real server error
+          setError('Email service is temporarily unavailable. Please try again later.');
         } else {
           setError(msg || 'Failed to send OTP. Please try again.');
         }
