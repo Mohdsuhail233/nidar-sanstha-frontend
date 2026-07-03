@@ -112,25 +112,12 @@ const Login: React.FC = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.message || '';
       if (forgotStep === 1) {
-        // Check if backend message indicates email not found/registered
-        const lowerMsg = msg.toLowerCase();
-        const isEmailNotFound = status === 404 || status === 400 || 
-          lowerMsg.includes('not found') || lowerMsg.includes('not registered') || lowerMsg.includes('no user') || lowerMsg.includes('does not exist');
-        
-        if (isEmailNotFound) {
-          setError('This email is not registered. Please enter the email provided by your admin.');
-        } else if (status === 500 && msg) {
-          // Server returned 500 but with a message - check if it's an email issue
-          if (lowerMsg.includes('not found') || lowerMsg.includes('not registered') || lowerMsg.includes('no user') || lowerMsg.includes('does not exist') || lowerMsg.includes('email')) {
-            setError('This email is not registered. Please enter the email provided by your admin.');
-          } else {
-            setError('Email service is temporarily unavailable. Please try again later.');
-          }
-        } else if (status === 500) {
-          // Server returned 500 with no message - likely a real server error
-          setError('Email service is temporarily unavailable. Please try again later.');
+        // Backend returns 500 even when email is not found, so treat all errors as "not registered"
+        // unless it's a clear network error (no response at all)
+        if (err.isNetworkError || !err.response) {
+          setError('Server is unreachable. Please try again later.');
         } else {
-          setError(msg || 'Failed to send OTP. Please try again.');
+          setError('This email is not registered. Please enter the email provided by your admin.');
         }
       } else if (forgotStep === 2) {
         setError(msg || 'Invalid OTP. Please check and try again.');
