@@ -38,6 +38,7 @@ export interface Customer {
   memberIdNo: string;
   name: string; 
   gender: string;
+  bloodGroup?: string;
   mobile: string;
   whatsappNo: string;
   dateOfBirth: string;

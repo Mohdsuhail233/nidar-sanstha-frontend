@@ -400,7 +400,7 @@ const SurveyResults: React.FC = () => {
               src={previewUrl}
               alt="Preview"
               className="w-full h-full object-contain rounded-3xl shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={() => { /* prevent close on image click */ }}
             />
           </div>
         </div>

@@ -8,7 +8,7 @@ import {
   Download, Smartphone, User, Upload, Users, Clock, Camera, Users2, Stethoscope,
   Info, UserCircle, CreditCard, HeartPulse, MapPin, Save, QrCode, X, Maximize2,
   BookOpen, Briefcase, CalendarCheck, ShieldCheck, Fingerprint, Droplet,
-  Share2, Image as ImageIcon
+  Share2, Image as ImageIcon, AlertTriangle
 } from "lucide-react";
 
 // --- AUTH IMAGE COMPONENT ---
@@ -177,6 +177,54 @@ const PhotoPreviewModal: React.FC<{
     </div>
   </div>
 );
+
+// Discard Confirmation Modal Component
+const DiscardConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ isOpen, onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/75 z-[120] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 space-y-6 text-center animate-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+          <AlertTriangle size={32} />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-xl font-black text-gray-900 tracking-tight">
+            Discard Unsaved Changes?
+          </h3>
+          <p className="text-xs font-bold text-rose-600 uppercase tracking-widest">
+            Unsaved Form Data
+          </p>
+          <p className="text-xs text-gray-500 font-medium leading-relaxed pt-1">
+            You have unsaved changes in this form. If you leave now, all entered data will be lost.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-2xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95"
+          >
+            Keep Editing
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 py-3.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-2xl text-xs uppercase tracking-wider border border-rose-200 transition-all active:scale-95"
+          >
+            Discard & Leave
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CustomerList: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -425,6 +473,8 @@ const CustomerForm: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [showCamera, setShowCamera] = useState<{
     type: string;
     index?: number;
@@ -461,11 +511,13 @@ const CustomerForm: React.FC = () => {
         setFetching(true);
         try {
           const resp = await api.get(`/form/view/${id}`);
-          if (resp.data)
+          if (resp.data) {
             setFormData({
               ...resp.data,
               familyMembers: resp.data.familyMembers || [],
             });
+            setIsDirty(false);
+          }
         } catch (err) {
           console.error("Fetch detail failed:", err);
           navigate("/customers/list");
@@ -477,8 +529,48 @@ const CustomerForm: React.FC = () => {
     }
   }, [id, navigate]);
 
+  // Intercept browser back button & tab unload when form has unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+
+    window.history.pushState({ dirtyGuard: true }, "");
+
+    const handlePopState = () => {
+      setShowDiscardModal(true);
+      window.history.pushState({ dirtyGuard: true }, "");
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  const handleBackClick = () => {
+    if (isDirty) {
+      setShowDiscardModal(true);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardModal(false);
+    setIsDirty(false);
+    navigate(-1);
+  };
+
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -486,6 +578,7 @@ const CustomerForm: React.FC = () => {
   };
 
   const handleFileCapture = (file: File, type: string, index?: number) => {
+    setIsDirty(true);
     if (type === "patientPhoto") {
       setFiles((prev) => ({ ...prev, patientPhoto: file }));
       console.log("✅ Patient photo captured");
@@ -514,6 +607,7 @@ const CustomerForm: React.FC = () => {
   };
 
   const removePrescriptionFile = (index: number) => {
+    setIsDirty(true);
     setPrescriptionFiles((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       console.log(
@@ -524,6 +618,7 @@ const CustomerForm: React.FC = () => {
   };
 
   const addFamilyMember = () => {
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       familyMembers: [
@@ -542,12 +637,14 @@ const CustomerForm: React.FC = () => {
   };
 
   const updateFamilyMember = (index: number, field: string, value: string) => {
+    setIsDirty(true);
     const updated = [...(formData.familyMembers || [])];
     updated[index] = { ...updated[index], [field]: value };
     setFormData((prev) => ({ ...prev, familyMembers: updated }));
   };
 
   const removeFamilyMember = (index: number) => {
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       familyMembers: (prev.familyMembers || []).filter((_, i) => i !== index),
@@ -638,6 +735,7 @@ const CustomerForm: React.FC = () => {
       const savedCustomer = response.data;
       console.log("✅ SAVED: " + savedCustomer.name);
 
+      setIsDirty(false);
       if (user?.role === Role.FIELD_STAFF) {
         alert(
           `REGISTRATION SUCCESSFUL!\n\nPatient Name: ${savedCustomer.name}\nCard ID: ${savedCustomer.memberIdNo}`
@@ -674,6 +772,11 @@ const CustomerForm: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-32 animate-in fade-in duration-500">
+      <DiscardConfirmationModal
+        isOpen={showDiscardModal}
+        onConfirm={handleConfirmDiscard}
+        onCancel={() => setShowDiscardModal(false)}
+      />
       {showCamera && (
         <CameraModal
           onCapture={(f) =>
@@ -685,7 +788,8 @@ const CustomerForm: React.FC = () => {
 
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate(-1)}
+          type="button"
+          onClick={handleBackClick}
           className="p-3 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
         >
           <ChevronLeft size={24} />
@@ -928,6 +1032,7 @@ const CustomerForm: React.FC = () => {
                     if ("geolocation" in navigator) {
                       navigator.geolocation.getCurrentPosition(
                         (position) => {
+                          setIsDirty(true);
                           setFormData((prev) => ({
                             ...prev,
                             latitude: position.coords.latitude.toString(),
