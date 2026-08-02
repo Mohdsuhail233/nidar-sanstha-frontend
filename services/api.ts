@@ -90,7 +90,7 @@ api.interceptors.response.use(
     // --- MAINTENANCE MODE: Server errors (500, 502, 503, 504) ---
     if (isMaintenanceError(error.response.status)) {
       if (shouldRedirectToMaintenance(error.config?.url)) {
-        window.location.href = '/maintenance';
+        window.location.href = `/maintenance?status=${error.response.status}`;
         return new Promise(() => {}); // Halt the promise chain during redirect
       }
     }
