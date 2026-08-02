@@ -68,6 +68,28 @@ const MaintenancePage: React.FC = () => {
             margin: '10px auto',
           }} />
           <p style={{
+            fontSize: '16px',
+            color: '#000000',
+            margin: '20px 0 5px 0',
+            fontWeight: 'bold',
+          }}>
+            We'll Be Back Soon
+          </p>
+          <p style={{
+            fontSize: '14px',
+            color: '#333333',
+            margin: '5px 0 20px 0',
+          }}>
+            Our team is currently fixing a technical issue.
+          </p>
+          <hr style={{
+            width: '80%',
+            maxWidth: '600px',
+            border: 'none',
+            borderTop: '1px solid #cccccc',
+            margin: '10px auto',
+          }} />
+          <p style={{
             fontSize: '14px',
             color: '#333333',
             margin: '10px 0 0 0',
