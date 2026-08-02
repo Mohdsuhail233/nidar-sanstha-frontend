@@ -20,6 +20,7 @@ const healthAxios = axios.create({
 
 export interface HealthCheckResult {
   isHealthy: boolean;
+  statusCode?: number; // Actual HTTP status code from the error response (if any)
 }
 
 /**
@@ -27,17 +28,19 @@ export interface HealthCheckResult {
  * 
  * Hits the Spring Boot Actuator health endpoint.
  * Returns { isHealthy: true } if the backend responds with 2xx.
- * Returns { isHealthy: false } for any error (network, timeout, 5xx, etc.)
+ * Returns { isHealthy: false, statusCode } for errors — captures the actual
+ * HTTP status code (e.g. 502 from Nginx) when available.
  * 
  * This function never throws — it always returns a result object.
  */
 export const checkBackendHealth = async (): Promise<HealthCheckResult> => {
   try {
     const response = await healthAxios.get('/actuator/health');
-    // Spring Boot Actuator returns { status: "UP" } when healthy
-    // We accept any 2xx as healthy — don't rely on response body shape
     return { isHealthy: response.status >= 200 && response.status < 300 };
-  } catch {
-    return { isHealthy: false };
+  } catch (error: any) {
+    return {
+      isHealthy: false,
+      statusCode: error?.response?.status || undefined,
+    };
   }
 };

@@ -56,6 +56,7 @@ const App: React.FC = () => {
   // --- Startup health check state ---
   const [isBootChecking, setIsBootChecking] = useState(true);
   const [isBackendDown, setIsBackendDown] = useState(false);
+  const [bootStatusCode, setBootStatusCode] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     // Skip boot check if user navigated directly to /maintenance
@@ -69,6 +70,7 @@ const App: React.FC = () => {
       if (cancelled) return;
       if (!result.isHealthy) {
         setIsBackendDown(true);
+        setBootStatusCode(result.statusCode);
       }
       setIsBootChecking(false);
     });
@@ -173,7 +175,7 @@ const App: React.FC = () => {
 
             <Route index element={
               isBackendDown
-                ? <Navigate to="/maintenance" replace />
+                ? <Navigate to={`/maintenance${bootStatusCode ? `?status=${bootStatusCode}` : ''}`} replace />
                 : <Navigate to={getDashboardPath()} replace />
             } />
           </Route>
@@ -181,7 +183,7 @@ const App: React.FC = () => {
           {/* Catch-all: redirect to maintenance if backend is down, otherwise dashboard */}
           <Route path="*" element={
             isBackendDown
-              ? <Navigate to="/maintenance" replace />
+              ? <Navigate to={`/maintenance${bootStatusCode ? `?status=${bootStatusCode}` : ''}`} replace />
               : <Navigate to={getDashboardPath()} replace />
           } />
         </Routes>
