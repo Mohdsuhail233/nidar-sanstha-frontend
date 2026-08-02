@@ -25,6 +25,20 @@ api.interceptors.request.use(
   }
 );
 
+// --- Helper: Check if a request should trigger maintenance redirect ---
+const isMaintenanceError = (status: number): boolean => {
+  return [500, 502, 503, 504].includes(status);
+};
+
+const shouldRedirectToMaintenance = (requestUrl?: string): boolean => {
+  // Don't redirect if already on maintenance page (prevents loops)
+  if (window.location.pathname === '/maintenance') return false;
+  // Don't redirect for health-check requests (they use a separate instance,
+  // but this is a safety net in case someone accidentally uses the main instance)
+  if (requestUrl?.includes('/actuator/health')) return false;
+  return true;
+};
+
 // --- RESPONSE INTERCEPTOR: Error handle karne ke liye ---
 api.interceptors.response.use(
   (response) => {
@@ -60,12 +74,25 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // --- MAINTENANCE MODE: Network error (backend completely unreachable) ---
     if (!error.response) {
       console.error("CRITICAL: Backend server at " + API_BASE_URL + " is unreachable.");
+      if (shouldRedirectToMaintenance(error.config?.url)) {
+        window.location.href = '/maintenance';
+        return new Promise(() => {}); // Halt the promise chain during redirect
+      }
       return Promise.reject({
         message: "Server unreachable. Please try again later.",
         isNetworkError: true
       });
+    }
+
+    // --- MAINTENANCE MODE: Server errors (500, 502, 503, 504) ---
+    if (isMaintenanceError(error.response.status)) {
+      if (shouldRedirectToMaintenance(error.config?.url)) {
+        window.location.href = '/maintenance';
+        return new Promise(() => {}); // Halt the promise chain during redirect
+      }
     }
 
     // Agar token expire ho gaya ya galat hai (401 ya 403)

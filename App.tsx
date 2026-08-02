@@ -10,6 +10,8 @@ import SurveyModule from './pages/SurveyModule';
 import AccessDenied from './pages/AccessDenied';
 import Layout from './components/Layout';
 import VerificationPage from './pages/VerificationPage';
+import MaintenancePage from './pages/MaintenancePage';
+import { checkBackendHealth } from './services/healthService';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -51,6 +53,29 @@ const App: React.FC = () => {
     }
   });
 
+  // --- Startup health check state ---
+  const [isBootChecking, setIsBootChecking] = useState(true);
+  const [isBackendDown, setIsBackendDown] = useState(false);
+
+  useEffect(() => {
+    // Skip boot check if user navigated directly to /maintenance
+    if (window.location.pathname === '/maintenance') {
+      setIsBootChecking(false);
+      return;
+    }
+
+    let cancelled = false;
+    checkBackendHealth().then((result) => {
+      if (cancelled) return;
+      if (!result.isHealthy) {
+        setIsBackendDown(true);
+      }
+      setIsBootChecking(false);
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
   const login = (session: UserSession) => {
     setUser(session);
     sessionStorage.setItem('nidar_user', JSON.stringify(session));
@@ -67,10 +92,42 @@ const App: React.FC = () => {
     return `/dashboard/${user.role.toLowerCase().replace('_', '-')}`;
   };
 
+  // --- Boot loading spinner ---
+  if (isBootChecking) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '16px',
+        background: '#f9fafb',
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e5e7eb',
+          borderTopColor: '#6366f1',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span style={{ color: '#6366f1', fontWeight: 500, fontSize: '14px' }}>
+          Connecting to server...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       <BrowserRouter>
         <Routes>
+          {/* Maintenance route — outside Layout, full-screen standalone page */}
+          <Route path="/maintenance" element={<MaintenancePage />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/access-denied" element={<AccessDenied />} />
           <Route path="/form/verify/:id" element={<VerificationPage />} />
@@ -114,11 +171,19 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            <Route index element={<Navigate to={getDashboardPath()} replace />} />
+            <Route index element={
+              isBackendDown
+                ? <Navigate to="/maintenance" replace />
+                : <Navigate to={getDashboardPath()} replace />
+            } />
           </Route>
 
-          {/* Catch-all for root level if Layout fails */}
-          <Route path="*" element={<Navigate to={getDashboardPath()} replace />} />
+          {/* Catch-all: redirect to maintenance if backend is down, otherwise dashboard */}
+          <Route path="*" element={
+            isBackendDown
+              ? <Navigate to="/maintenance" replace />
+              : <Navigate to={getDashboardPath()} replace />
+          } />
         </Routes>
       </BrowserRouter>
     </AuthContext.Provider>
